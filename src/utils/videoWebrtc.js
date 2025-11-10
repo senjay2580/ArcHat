@@ -39,7 +39,7 @@ export class VideoWebRTCManager {
     }
     
     // 调试标志
-    this.DEBUG_VIDEO_WEBRTC = true
+    this.DEBUG_VIDEO_WEBRTC = false
   }
 
   /**
@@ -48,38 +48,30 @@ export class VideoWebRTCManager {
    * @param {Object} userStore - 用户信息store
    */
   init(websocket, userStore) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 视频WebRTC管理器初始化:', { 
-        websocket: !!websocket, 
-        userStore: !!userStore, 
-        userInfo: !!userStore?.userInfo 
-      })
-    }
+
     
     this.websocket = websocket
     this.userStore = userStore
     
     // 验证userStore是否有效
     if (!userStore || !userStore.userInfo) {
-      console.error('❌ 视频WebRTC初始化失败: userStore或userInfo无效')
+      // console.error('❌ 视频WebRTC初始化失败: userStore或userInfo无效')
       throw new Error('视频WebRTC初始化失败: 用户信息无效')
     }
     
     // 验证websocket是否有效
     if (!websocket || typeof websocket.send !== 'function') {
-      console.error('❌ 视频WebRTC初始化失败: websocket无效')
+      // console.error('❌ 视频WebRTC初始化失败: websocket无效')
       throw new Error('视频WebRTC初始化失败: WebSocket连接无效')
     }
     
     // 监听视频通话信令
     emitter.on('video-webrtc-signal', (data) => {
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('🎥 收到视频通话信令:', data.type, data)
-      }
+
       this.handleVideoSignalMessage(data)
     })
     
-    console.log('✅ 视频WebRTC管理器初始化成功')
+    // console.log('✅ 视频WebRTC管理器初始化成功')
   }
 
   /**
@@ -91,27 +83,14 @@ export class VideoWebRTCManager {
    * @param {string} options.selectedDeviceId - 选定的摄像头设备ID
    */
   async startVideoCall(targetUserId, targetUserInfo, options = {}) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 发起视频通话:', { targetUserId, targetUserInfo, options })
-      console.log('🎥 WebRTC管理器状态:', {
-        websocket: !!this.websocket,
-        userStore: !!this.userStore,
-        userInfo: !!this.userStore?.userInfo
-      })
-    }
+
     
     try {
       this.isInitiator = true
       this.remoteUserId = targetUserId
       this.videoCallId = `video_call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${targetUserId}`
       
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('🎥 生成视频通话 ID:', this.videoCallId)
-        console.log('🎥 摄像头设备选项:', {
-          cameraEnabled: options.cameraEnabled,
-          selectedDeviceId: options.selectedDeviceId
-        })
-      }
+
       
       // 获取本地音视频流，传入摄像头设备选项
       await this.getLocalVideoStream(options.cameraEnabled, options.selectedDeviceId)
@@ -141,7 +120,7 @@ export class VideoWebRTCManager {
       
       return true
     } catch (error) {
-      console.error('❌ 发起视频通话失败:', error)
+      // console.error('❌ 发起视频通话失败:', error)
       this.handleVideoError('发起视频通话失败: ' + error.message)
       return false
     }
@@ -152,9 +131,7 @@ export class VideoWebRTCManager {
    * @param {string} callId - 通话ID
    */
   async acceptVideoCall(callId) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 接受视频通话:', callId)
-    }
+
     
     try {
       this.videoCallId = callId
@@ -180,7 +157,7 @@ export class VideoWebRTCManager {
       
       return true
     } catch (error) {
-      console.error('❌ 接受视频通话失败:', error)
+      // console.error('❌ 接受视频通话失败:', error)
       this.handleVideoError('接受视频通话失败: ' + error.message)
       return false
     }
@@ -192,9 +169,7 @@ export class VideoWebRTCManager {
    * @param {string} reason - 拒绝原因
    */
   rejectVideoCall(callId, reason = 'rejected') {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 拒绝视频通话:', { callId, reason })
-    }
+
     
     this.sendVideoSignal({
       type: 'video-call-reject',
@@ -210,9 +185,7 @@ export class VideoWebRTCManager {
    * 挂断视频通话
    */
   endVideoCall() {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 挂断视频通话')
-    }
+
     
     if (this.videoCallId && this.remoteUserId) {
       this.sendVideoSignal({
@@ -235,9 +208,7 @@ export class VideoWebRTCManager {
         audioTrack.enabled = !audioTrack.enabled
         this.isVideoMuted = !audioTrack.enabled
         
-        if (this.DEBUG_VIDEO_WEBRTC) {
-          console.log('🎥 视频通话静音切换:', this.isVideoMuted ? '静音' : '取消静音')
-        }
+
         
         return this.isVideoMuted
       }
@@ -256,9 +227,7 @@ export class VideoWebRTCManager {
         this.isVideoEnabled = videoTrack.enabled
         this.isCameraOn = videoTrack.enabled
         
-        if (this.DEBUG_VIDEO_WEBRTC) {
-          console.log('🎥 视频开关切换:', this.isVideoEnabled ? '开启' : '关闭')
-        }
+
         
         return this.isVideoEnabled
       }
@@ -271,7 +240,7 @@ export class VideoWebRTCManager {
    */
   async switchCamera() {
     if (!this.localVideoStream) {
-      console.warn('❌ 无本地视频流，无法切换摄像头')
+      // console.warn('❌ 无本地视频流，无法切换摄像头')
       return false
     }
 
@@ -279,9 +248,7 @@ export class VideoWebRTCManager {
       // 切换摄像头方向
       this.currentCamera = this.currentCamera === 'user' ? 'environment' : 'user'
       
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('🎥 切换摄像头到:', this.currentCamera === 'user' ? '前置' : '后置')
-      }
+
       
       // 停止当前视频轨道
       const videoTrack = this.localVideoStream.getVideoTracks()[0]
@@ -324,10 +291,10 @@ export class VideoWebRTCManager {
         this.onLocalVideoStream(this.localVideoStream)
       }
       
-      console.log('✅ 摄像头切换成功:', this.currentCamera === 'user' ? '前置' : '后置')
+      // console.log('✅ 摄像头切换成功:', this.currentCamera === 'user' ? '前置' : '后置')
       return true
     } catch (error) {
-      console.error('❌ 切换摄像头失败:', error)
+      // console.error('❌ 切换摄像头失败:', error)
       return false
     }
   }
@@ -337,33 +304,33 @@ export class VideoWebRTCManager {
    */
   async getOptimalVideoConstraints() {
     try {
-      console.log('🔍 开始检测视频设备...')
+      // console.log('🔍 开始检测视频设备...')
       
       // 先获取一次基本的媒体权限，这样才能看到设备的真实标签
-      console.log('🔑 先获取媒体权限以查看设备标签...')
+      // console.log('🔑 先获取媒体权限以查看设备标签...')
       try {
         const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         tempStream.getTracks().forEach(track => track.stop()) // 立即停止，只是为了获取权限
-        console.log('✅ 媒体权限获取成功')
+        // console.log('✅ 媒体权限获取成功')
       } catch (permError) {
-        console.warn('⚠️ 获取媒体权限失败，可能无法看到设备标签:', permError.message)
+        // console.warn('⚠️ 获取媒体权限失败，可能无法看到设备标签:', permError.message)
       }
       
       // 枚举所有视频输入设备
       const devices = await navigator.mediaDevices.enumerateDevices()
       const videoDevices = devices.filter(device => device.kind === 'videoinput')
       
-      console.log('🎥 检测到的视频设备数量:', videoDevices.length)
-      console.log('🎥 详细设备信息:', videoDevices.map(d => ({
-        deviceId: d.deviceId,
-        label: d.label || '未知设备',
-        groupId: d.groupId
-      })))
+      // console.log('🎥 检测到的视频设备数量:', videoDevices.length)
+      // console.log('🎥 详细设备信息:', videoDevices.map(d => ({
+      //   deviceId: d.deviceId,
+      //   label: d.label || '未知设备',
+      //   groupId: d.groupId
+      // })))
       
       // 检查是否有设备标签权限
       const hasLabels = videoDevices.some(d => d.label && d.label.trim() !== '')
       if (!hasLabels) {
-        console.warn('⚠️ 设备标签为空，可能需要先获取媒体权限')
+        // console.warn('⚠️ 设备标签为空，可能需要先获取媒体权限')
       }
       
       // 查找OBS虚拟摄像头（多种可能的名称）
@@ -378,18 +345,18 @@ export class VideoWebRTCManager {
         'streamlabs'
       ]
       
-      console.log('🔍 开始查找OBS虚拟摄像头...')
-      console.log('🔍 搜索关键词:', obsKeywords)
+      // console.log('🔍 开始查找OBS虚拟摄像头...')
+      // console.log('🔍 搜索关键词:', obsKeywords)
       
       let obsDevice = null
       for (const device of videoDevices) {
         const label = (device.label || '').toLowerCase()
-        console.log(`🔍 检查设备: "${device.label}" -> 小写: "${label}"`)
+        // console.log(`🔍 检查设备: "${device.label}" -> 小写: "${label}"`)
         
         for (const keyword of obsKeywords) {
           if (label.includes(keyword.toLowerCase())) {
             obsDevice = device
-            console.log(`🎯 找到OBS虚拟摄像头! 设备: "${device.label}", 匹配关键词: "${keyword}"`)
+            // console.log(`🎯 找到OBS虚拟摄像头! 设备: "${device.label}", 匹配关键词: "${keyword}"`)
             break
           }
         }
@@ -398,10 +365,10 @@ export class VideoWebRTCManager {
       }
       
       if (!obsDevice) {
-        console.log('❌ 未找到OBS虚拟摄像头')
-        console.log('📝 所有可用设备:')
+        // console.log('❌ 未找到OBS虚拟摄像头')
+        // console.log('📝 所有可用设备:')
         videoDevices.forEach((device, index) => {
-          console.log(`  ${index + 1}. "${device.label || '未知设备'}"`)
+          // console.log(`  ${index + 1}. "${device.label || '未知设备'}"`)
         })
       }
       
@@ -415,7 +382,7 @@ export class VideoWebRTCManager {
       
       // 如果找到OBS虚拟摄像头，优先使用
       if (obsDevice && obsDevice.deviceId) {
-        console.log('✅ 使用OBS虚拟摄像头:', obsDevice.label)
+        // console.log('✅ 使用OBS虚拟摄像头:', obsDevice.label)
         return {
           ...baseConstraints,
           deviceId: { exact: obsDevice.deviceId }
@@ -423,14 +390,14 @@ export class VideoWebRTCManager {
       }
       
       // 如果没有找到OBS虚拟摄像头，使用默认配置
-      console.log('⚠️ 未找到OBS虚拟摄像头，使用默认摄像头配置')
+      // console.log('⚠️ 未找到OBS虚拟摄像头，使用默认摄像头配置')
       return {
         ...baseConstraints,
         facingMode: this.currentCamera   // 使用当前摄像头设置
       }
       
     } catch (error) {
-      console.error('❌ 检测视频设备失败:', error)
+      // console.error('❌ 检测视频设备失败:', error)
       // 如果设备枚举失败，回退到基础配置
       return {
         width: { ideal: 1280, max: 1920 },
@@ -473,7 +440,7 @@ export class VideoWebRTCManager {
       if (!cameraEnabled) {
         // 如果不启用摄像头，设置为false
         videoConstraints = false
-        console.log('📹 摄像头已禁用')
+        // console.log('📹 摄像头已禁用')
       } else if (selectedDeviceId) {
         // 如果指定了设备ID，使用指定设备
         videoConstraints = {
@@ -483,11 +450,11 @@ export class VideoWebRTCManager {
           frameRate: { ideal: 30, max: 60 },
           facingMode: 'user'
         }
-        console.log('📹 使用指定摄像头设备:', selectedDeviceId)
+        // console.log('📹 使用指定摄像头设备:', selectedDeviceId)
       } else {
         // 否则检测并优先使用OBS虚拟摄像头
         videoConstraints = await this.getOptimalVideoConstraints()
-        console.log('📹 使用自动检测的最优摄像头设备')
+        // console.log('📹 使用自动检测的最优摄像头设备')
       }
       
       this.localVideoStream = await navigator.mediaDevices.getUserMedia({
@@ -495,12 +462,7 @@ export class VideoWebRTCManager {
         video: videoConstraints
       })
       
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('✅ 获取本地视频流成功:', {
-          audioTracks: this.localVideoStream.getAudioTracks().length,
-          videoTracks: this.localVideoStream.getVideoTracks().length
-        })
-      }
+
       
       // 通知组件本地视频流已准备好
       if (this.onLocalVideoStream) {
@@ -509,7 +471,7 @@ export class VideoWebRTCManager {
       
       return this.localVideoStream
     } catch (error) {
-      console.error('❌ 获取本地视频流失败:', error)
+      // console.error('❌ 获取本地视频流失败:', error)
       
       // 根据错误类型提供更具体的错误信息
       if (error.name === 'NotReadableError' && error.message.includes('Device in use')) {
@@ -528,17 +490,13 @@ export class VideoWebRTCManager {
    * 创建PeerConnection 创建WebRTC连接
    */
   createPeerConnection() {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 创建视频WebRTC连接')
-    }
+
     
     this.peerConnection = new RTCPeerConnection(this.pcConfig)
     
     // 监听远程流
     this.peerConnection.ontrack = (event) => {
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('🎥 收到远程流:', event.track.kind, '流数量:', event.streams.length)
-      }
+
       
       this.remoteVideoStream = event.streams[0]
       if (this.onRemoteVideoStream) {
@@ -549,9 +507,7 @@ export class VideoWebRTCManager {
     
     // 监听连接状态变化
     this.peerConnection.onconnectionstatechange = () => {
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('🎥 视频连接状态变化:', this.peerConnection.connectionState)
-      }
+
       
       switch (this.peerConnection.connectionState) {
         case 'connected':
@@ -569,10 +525,6 @@ export class VideoWebRTCManager {
     // 监听ICE候选
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
-        if (this.DEBUG_VIDEO_WEBRTC) {
-          console.log('🎥 发送ICE候选')
-        }
-        
         this.sendVideoSignal({
           type: 'ice-candidate',
           callId: this.videoCallId,
@@ -588,9 +540,9 @@ export class VideoWebRTCManager {
    */
   playRemoteVideoStream() {
     if (this.remoteVideoStream) {
-      if (this.DEBUG_VIDEO_WEBRTC) {
-        console.log('🎥 开始播放远程视频流')
-      }
+      // if (this.DEBUG_VIDEO_WEBRTC) {
+      //   console.log('🎥 开始播放远程视频流')
+      // }
       
       // 清理之前的视频元素，防止多个播放器同时工作
       const existingVideo = document.querySelector('#webrtc-remote-video')
@@ -600,7 +552,7 @@ export class VideoWebRTCManager {
       
       // 注意：这里不直接创建 video 元素，而是通过回调通知组件
       // 组件会负责创建和管理 video 元素
-      console.log('🎥 远程视频流已准备好，等待组件处理')
+      // console.log('🎥 远程视频流已准备好，等待组件处理')
     }
   }
 
@@ -608,9 +560,7 @@ export class VideoWebRTCManager {
    * 处理后端发送过来的视频信令消息
    */
   async handleVideoSignalMessage(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 处理视频信令消息:', data.type)
-    }
+
     
     try {
       switch (data.type) {
@@ -636,10 +586,10 @@ export class VideoWebRTCManager {
           await this.handleVideoIceCandidate(data)
           break
         default:
-          console.warn('🎥 未知的视频信令类型:', data.type)
+          // console.warn('🎥 未知的视频信令类型:', data.type)
       }
     } catch (error) {
-      console.error('❌ 处理视频信令消息失败:', error)
+      // console.error('❌ 处理视频信令消息失败:', error)
       this.handleVideoError('处理视频信令失败: ' + error.message)
     }
   }
@@ -648,16 +598,7 @@ export class VideoWebRTCManager {
    * 处理视频通话邀请
    */
   async handleVideoCallInvite(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 收到视频通话邀请 - 详细信息:', {
-        callId: data.callId,
-        callerInfo: data.callerInfo,
-        hasOnIncomingCallback: !!this.onIncomingCall,
-        currentVideoCallStatus: this.videoCallStatus,
-        websocketStatus: !!this.websocket,
-        userStoreStatus: !!this.userStore
-      })
-    }
+
     
     this.videoCallId = data.callId
     this.remoteUserId = data.callerInfo.id
@@ -665,20 +606,20 @@ export class VideoWebRTCManager {
     
     // 通过回调函数将来电信息传递给上层（videoCall store）
     if (this.onIncomingCall) {
-      console.log('✅ 调用 onIncomingCall 回调函数')
+      // console.log('✅ 调用 onIncomingCall 回调函数')
       this.onIncomingCall(data.callerInfo, data.callId)
     } else {
-      console.error('❌ onIncomingCall callback未定义，自动拒绝视频通话')
-      console.error('❌ 调试信息:', {
-        thisObject: this,
-        onIncomingCallType: typeof this.onIncomingCall,
-        allCallbacks: {
-          onIncomingCall: !!this.onIncomingCall,
-          onCallStatusChange: !!this.onCallStatusChange,
-          onLocalVideoStream: !!this.onLocalVideoStream,
-          onRemoteVideoStream: !!this.onRemoteVideoStream
-        }
-      })
+      // console.error('❌ onIncomingCall callback未定义，自动拒绝视频通话')
+      // console.error('❌ 调试信息:', {
+      //   thisObject: this,
+      //   onIncomingCallType: typeof this.onIncomingCall,
+      //   allCallbacks: {
+      //     onIncomingCall: !!this.onIncomingCall,
+      //     onCallStatusChange: !!this.onCallStatusChange,
+      //     onLocalVideoStream: !!this.onLocalVideoStream,
+      //     onRemoteVideoStream: !!this.onRemoteVideoStream
+      //   }
+      // })
       this.rejectVideoCall(data.callId, 'error')
     }
   }
@@ -689,9 +630,7 @@ export class VideoWebRTCManager {
   async handleVideoCallAccept(data) {
     this.updateVideoCallStatus('connected')
     
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 视频通话被接受，开始创建offer')
-    }
+
     
     // 创建并发送offer
     const offer = await this.peerConnection.createOffer()
@@ -709,9 +648,7 @@ export class VideoWebRTCManager {
    * 处理视频通话拒绝
    */
   handleVideoCallReject(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 视频通话被拒绝:', data.reason)
-    }
+
     
     this.updateVideoCallStatus('ended')
     this.cleanup()
@@ -721,9 +658,7 @@ export class VideoWebRTCManager {
    * 处理视频通话挂断
    */
   handleVideoCallHangup(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 视频通话被挂断')
-    }
+
     
     this.updateVideoCallStatus('ended')
     this.cleanup()
@@ -733,9 +668,7 @@ export class VideoWebRTCManager {
    * 处理视频offer
    */
   async handleVideoOffer(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 收到视频offer')
-    }
+
     
     await this.peerConnection.setRemoteDescription(data.offer)
     const answer = await this.peerConnection.createAnswer()
@@ -753,9 +686,7 @@ export class VideoWebRTCManager {
    * 处理视频answer
    */
   async handleVideoAnswer(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 收到视频answer')
-    }
+
     
     await this.peerConnection.setRemoteDescription(data.answer)
   }
@@ -764,9 +695,7 @@ export class VideoWebRTCManager {
    * 处理视频ICE候选
    */
   async handleVideoIceCandidate(data) {
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 收到视频ICE候选')
-    }
+
     
     await this.peerConnection.addIceCandidate(data.candidate)
   }
@@ -776,7 +705,7 @@ export class VideoWebRTCManager {
    */
   sendVideoSignal(signalData) {
     if (!this.websocket || !this.websocket.send) {
-      console.error('❌ WebSocket不可用，无法发送视频信令')
+      // console.error('❌ WebSocket不可用，无法发送视频信令')
       return
     }
     
@@ -785,14 +714,12 @@ export class VideoWebRTCManager {
       data: signalData
     }
     
-    if (this.DEBUG_VIDEO_WEBRTC) {
-      console.log('🎥 发送视频信令:', signalData.type, message)
-    }
+
     
     try {
       this.websocket.send(message)
     } catch (error) {
-      console.error('❌ 发送视频信令失败:', error)
+      // console.error('❌ 发送视频信令失败:', error)
       this.handleVideoError('发送视频信令失败: ' + error.message)
     }
   }

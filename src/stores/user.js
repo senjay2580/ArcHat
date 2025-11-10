@@ -61,8 +61,8 @@ export const useUserInfoStore = defineStore('userInfo', () => {
         wsUrl = import.meta.env.VITE_WEBSOCKET_URL || 'ws://localhost:8090';
       } else {
         // 生产环境：动态构建 URL
-        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = import.meta.env.VITE_WEBSOCKET_URL || `${protocol}//${location.host}/ws`;
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        wsUrl = import.meta.env.VITE_WEBSOCKET_URL || `${protocol}://${location.host}/ws/`;
       }
       
       console.log('WebSocket URL:', wsUrl);
@@ -95,6 +95,10 @@ export const useUserInfoStore = defineStore('userInfo', () => {
               case 5:
                 emitter.emit('user-status', data.data);
                 console.log('收到用户上下线通知:', data.data);
+                break;
+              case 9: // 撤回消息
+                console.log('收到撤回消息:', data.data);
+                emitter.emit('message-recall', data.data);
                 break;
               case 12: // WebRTC信令消息（语音和视频通话共用）
                 console.log('收到WebRTC信令消息:', data.data);

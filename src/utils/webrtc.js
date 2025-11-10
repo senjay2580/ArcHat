@@ -28,8 +28,25 @@ class WebRTCManager {
     this.pcConfig = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' }
-      ]
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' }
+      ],
+      iceCandidatePoolSize: 10
+    }
+    
+    // === HTTP环境兼容性配置 ===
+    this.isHttpsContext = location.protocol === 'https:'
+    this.mediaConstraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        // HTTP环境下降低音频质量要求
+        sampleRate: this.isHttpsContext ? 48000 : 16000,
+        channelCount: this.isHttpsContext ? 2 : 1
+      },
+      video: false // 语音通话不需要视频
     }
   }
 
@@ -39,18 +56,61 @@ class WebRTCManager {
    * @param {Object} userStore - 用户信息store
    */
   init(websocket, userStore) {
-    console.log('WebRTC管理器初始化:', { websocket: !!websocket, userStore: !!userStore, userInfo: !!userStore?.userInfo })
     this.websocket = websocket
     this.userStore = userStore
     
     // 验证userStore是否有效
     if (!userStore || !userStore.userInfo) {
-      console.error('WebRTC初始化失败: userStore或userInfo无效')
+      console.warn('WebRTC初始化失败: userStore或userInfo无效')
       return false
     }
     
+    // 检查WebRTC支持
+    if (!this.checkWebRTCSupport()) {
+      console.error('当前浏览器不支持WebRTC')
+      return false
+    }
+    
+    // 检查媒体设备访问权限
+    this.checkMediaPermissions()
+    
     this.setupWebSocketListeners()
     return true
+  }
+  
+  /**
+   * 检查WebRTC支持
+   */
+  checkWebRTCSupport() {
+    return !!(window.RTCPeerConnection && navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+  }
+  
+  /**
+   * 检查媒体设备访问权限
+   */
+  async checkMediaPermissions() {
+    try {
+      if (!this.isHttpsContext) {
+        console.warn('⚠️ HTTP环境下WebRTC功能受限，建议使用HTTPS')
+        console.warn('💡 解决方案：使用 cpolar http 80 --scheme=https 创建HTTPS隧道')
+      }
+      
+      // 检查媒体设备权限
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const audioDevices = devices.filter(device => device.kind === 'audioinput')
+      
+      if (audioDevices.length === 0) {
+        console.warn('未检测到音频输入设备')
+      } else {
+        console.log(`检测到 ${audioDevices.length} 个音频输入设备`)
+      }
+      
+    } catch (error) {
+      console.error('媒体设备检查失败:', error)
+      if (error.name === 'NotAllowedError') {
+        console.error('❌ 媒体设备访问被拒绝，请检查浏览器权限设置')
+      }
+    }
   }
 
   /**
@@ -58,7 +118,7 @@ class WebRTCManager {
    * @param {Object} persistedState - 持久化的通话状态
    */
   async restoreCall(persistedState) {
-    console.log('🔄 开始恢复通话连接:', persistedState)
+
     
     try {
       // 设置基本信息
@@ -67,16 +127,11 @@ class WebRTCManager {
       this.callId = persistedState.callId || persistedState.pendingCallId
       this.isMuted = persistedState.isMuted || false
       
-      console.log('🔍 恢复通话ID信息:', {
-        persistedCallId: persistedState.callId,
-        persistedPendingCallId: persistedState.pendingCallId,
-        finalCallId: this.callId,
-        remoteUserId: this.remoteUserId
-      })
+
       
       // 获取本地音频流
       await this.getLocalStream()
-      console.log('✅ 本地音频流恢复成功')
+
       
       // 创建新的PeerConnection
       this.createPeerConnection()
@@ -99,16 +154,15 @@ class WebRTCManager {
         }
       }
       
-      console.log('📤 发送恢复信令详情:', restoreSignal)
+
       this.sendSignal(restoreSignal)
       
       // 更新状态
       this.updateCallStatus('connecting')
-      console.log('✅ 通话恢复信令已发送，等待对方响应')
+
       
       return true
     } catch (error) {
-      console.error('❌ 恢复通话连接失败:', error)
       this.handleError('恢复通话连接失败: ' + error.message)
       return false
     }
@@ -121,7 +175,7 @@ class WebRTCManager {
   setupWebSocketListeners() {
     // 通过事件总线监听WebRTC信令消息
     emitter.on('webrtc-signal', this.handleSignalMessage.bind(this))
-    console.log('WebRTC管理器已设置事件监听器')
+
   }
 
   /**
@@ -130,18 +184,13 @@ class WebRTCManager {
    * @param {Object} targetUserInfo - 目标用户信息
    */
   async startCall(targetUserId, targetUserInfo) {
-    console.log('WebRTC Manager startCall 被调用，参数:', { targetUserId, targetUserInfo });
-    console.log('WebRTC Manager 初始化状态:', {
-      websocket: !!this.websocket,
-      userStore: !!this.userStore,
-      userInfo: !!this.userStore?.userInfo
-    });
+
     
     try {
       this.isInitiator = true
       this.remoteUserId = targetUserId
       this.callId = `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` + targetUserId
-      console.log('生成的 callId:', this.callId);
+
       
       // 获取本地音频流
       await this.getLocalStream()
@@ -170,7 +219,6 @@ class WebRTCManager {
       })
       return true
     } catch (error) {
-      console.error('发起通话失败:', error)
       this.handleError('发起通话失败: ' + error.message)
       return false
     }
@@ -208,7 +256,6 @@ class WebRTCManager {
       
       return true
     } catch (error) {
-      console.error('接受通话失败:', error)
       this.handleError('接受通话失败: ' + error.message)
       return false
     }
@@ -257,37 +304,38 @@ class WebRTCManager {
   }
 
   /**
-   * 获取本地音频流
+   * 获取本地音频流（兼容HTTP环境）
    */
   async getLocalStream() {
     try {
-      // 高级音频配置，增强回声消除和噪音抑制
-      const audioConstraints = {
-        echoCancellation: true,           // 回声消除
-        noiseSuppression: true,           // 噪音抑制
-        autoGainControl: true,            // 自动增益控制
-        sampleRate: 48000,                // 高采样率
-        sampleSize: 16,                   // 16位采样
-        channelCount: 1,                  // 单声道，减少带宽
-        latency: 0.01,                    // 低延迟
-        volume: 0.8,                      // 限制音量防止过载
-        // 高级噪音抑制设置
-        googEchoCancellation: true,
-        googAutoGainControl: true,
-        googNoiseSuppression: true,
-        googHighpassFilter: true,         // 高通滤波器
-        googTypingNoiseDetection: true,   // 键盘噪音检测
-        googAudioMirroring: false         // 禁用音频镜像
-      }
+      console.log(`🎤 获取音频流 - 环境: ${this.isHttpsContext ? 'HTTPS' : 'HTTP'}`)
       
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        audio: audioConstraints,
-        video: false
+      // 使用兼容性配置
+      this.localStream = await navigator.mediaDevices.getUserMedia(this.mediaConstraints)
+      
+      console.log('✅ 音频流获取成功:', {
+        tracks: this.localStream.getAudioTracks().length,
+        settings: this.localStream.getAudioTracks()[0]?.getSettings()
       })
+      
       return this.localStream
     } catch (error) {
-      console.error('获取本地音频流失败:', error)
-      throw new Error('无法访问麦克风，请检查权限设置')
+      console.error('❌ 音频流获取失败:', error)
+      
+      // 根据错误类型提供具体的解决建议
+      if (error.name === 'NotAllowedError') {
+        if (!this.isHttpsContext) {
+          throw new Error('HTTP环境下无法访问麦克风。解决方案：\n1. 使用 cpolar http 80 --scheme=https 创建HTTPS隧道\n2. 或在浏览器中允许不安全内容的麦克风访问')
+        } else {
+          throw new Error('麦克风访问被拒绝，请在浏览器设置中允许麦克风权限')
+        }
+      } else if (error.name === 'NotFoundError') {
+        throw new Error('未找到音频输入设备，请检查麦克风是否正确连接')
+      } else if (error.name === 'NotReadableError') {
+        throw new Error('麦克风被其他应用占用，请关闭其他使用麦克风的程序')
+      } else {
+        throw new Error(`音频设备访问失败: ${error.message}`)
+      }
     }
   }
 
@@ -314,7 +362,7 @@ class WebRTCManager {
     
     // 监听远程流
     this.peerConnection.ontrack = (event) => {
-      console.log('收到远程音频流')
+
       this.remoteStream = event.streams[0]
       if (this.onRemoteStream) {
         this.onRemoteStream(this.remoteStream)
@@ -324,7 +372,6 @@ class WebRTCManager {
     
     // 监听连接状态变化
     this.peerConnection.onconnectionstatechange = () => {
-      console.log('PeerConnection状态:', this.peerConnection.connectionState)
       if (this.peerConnection.connectionState === 'connected') {
         this.updateCallStatus('connected')
       } else if (this.peerConnection.connectionState === 'disconnected' || 
@@ -362,15 +409,15 @@ class WebRTCManager {
       
       // 监听音频事件
       audioElement.onloadedmetadata = () => {
-        console.log('远程音频流元数据加载完成')
+
       }
       
       audioElement.onplay = () => {
-        console.log('远程音频开始播放')
+
       }
       
       audioElement.onerror = (error) => {
-        console.error('远程音频播放错误:', error)
+        this.handleError('远程音频播放错误: ' + error.message)
       }
       
       document.body.appendChild(audioElement)
@@ -416,7 +463,6 @@ class WebRTCManager {
           break
       }
     } catch (error) {
-      console.error('处理信令消息失败:', error)
       this.handleError('信令处理失败: ' + error.message)
     }
   }
@@ -433,7 +479,6 @@ class WebRTCManager {
     if (this.onIncomingCall) {
       this.onIncomingCall(data.callerInfo, data.callId)
     } else {
-      console.error('onIncomingCall callback is not defined. Auto-rejecting call.')
       this.rejectCall(data.callId, 'error')
     }
   }
@@ -460,21 +505,11 @@ class WebRTCManager {
    * 处理通话拒绝
    */
   handleCallReject(data) {
-    console.log('通话被拒绝 - 详细信息:', {
-      callId: data.callId,
-      fromUserId: data.targetUserId || data.fromUserId,
-      currentCallId: this.callId,
-      currentRemoteUserId: this.remoteUserId,
-      currentUserId: this.userStore?.uid,
-      reason: data.reason || 'unknown'
-    })
-    
     // 检查是否是当前通话的拒绝
     if (data.callId === this.callId) {
       this.updateCallStatus('rejected')
       this.endCall()
     } else {
-      console.warn('收到不匹配的拒绝信令，忽略')
     }
   }
 
@@ -482,7 +517,7 @@ class WebRTCManager {
    * 处理通话挂断
    */
   handleCallHangup(data) {
-    console.log('对方挂断通话:', data)
+
     this.updateCallStatus('ended')
     this.endCall()
   }
@@ -491,31 +526,14 @@ class WebRTCManager {
    * 处理通话恢复请求（对方发起的恢复）- 使用ICE重启策略
    */
   async handleCallRestore(data) {
-    console.log('🔄 收到通话恢复请求:', data)
+
     
     // 检查当前状态是否适合恢复
-    console.log('🔍 当前状态检查:', {
-      currentCallStatus: this.callStatus,
-      currentCallId: this.callId,
-      currentRemoteUserId: this.remoteUserId,
-      hasLocalStream: !!this.localStream,
-      hasPeerConnection: !!this.peerConnection,
-      connectionState: this.peerConnection?.connectionState
-    })
-    
     try {
       // 设置基本信息
       this.remoteUserId = data.restoreInfo?.userId || data.currentUserId || this.remoteUserId
       this.callId = data.callId
       this.isInitiator = false
-      
-      console.log('🔧 设置恢复信息:', {
-        dataRestoreUserId: data.restoreInfo?.userId,
-        currentUserId: data.currentUserId,
-        finalRemoteUserId: this.remoteUserId,
-        callId: this.callId,
-        isInitiator: this.isInitiator
-      })
       
       // 🏆 专业方案：使用ICE重启而不是重新创建连接
       const hasExistingConnection = this.peerConnection && 
@@ -523,10 +541,10 @@ class WebRTCManager {
          this.peerConnection.connectionState === 'connecting')
       
       if (hasExistingConnection && this.localStream) {
-        console.log('🚀 使用ICE重启策略恢复连接（专业方案）')
+
         await this.performIceRestart()
       } else {
-        console.log('🔄 重新建立完整连接')
+
         await this.establishFreshConnection()
       }
       
@@ -542,15 +560,13 @@ class WebRTCManager {
         }
       }
       
-      console.log('📤 发送恢复响应详情:', restoreResponse)
       this.sendSignal(restoreResponse)
       
       // 更新状态
       this.updateCallStatus('connecting')
-      console.log('✅ 通话恢复响应已发送')
+
       
     } catch (error) {
-      console.error('❌ 处理通话恢复请求失败:', error)
       
       // 发送失败响应
       this.sendSignal({
@@ -567,47 +583,33 @@ class WebRTCManager {
    * 处理通话恢复响应
    */
   async handleCallRestoreResponse(data) {
-    console.log('🔄 收到通话恢复响应:', data)
-    console.log('🔍 响应数据详情:', {
-      hasSuccess: 'success' in data,
-      successValue: data.success,
-      dataKeys: Object.keys(data),
-      fullData: data
-    })
-    
+
     // 检查success字段，如果不存在或为undefined，默认为true（因为能收到响应就说明对方同意）
     // 修复逻辑：只有明确的false才认为失败，其他情况都认为成功
     const isSuccess = data.success !== false
     
-    console.log('🔍 恢复成功判断:', {
-      originalSuccess: data.success,
-      finalSuccess: isSuccess,
-      willProceed: isSuccess
-    })
-    
     if (isSuccess) {
-      console.log('✅ 对方同意恢复通话，准备重新建立连接')
+
       this.updateCallStatus('connecting')
       
       // 🏆 专业方案：使用ICE重启策略恢复连接
       if (this.isInitiator) {
-        console.log('🚀 作为发起方，使用ICE重启策略重新建立连接')
+
         
         // 检查是否有现有连接可以重启
         if (this.peerConnection && this.localStream) {
-          console.log('🔄 使用ICE重启恢复现有连接')
+
           await this.performIceRestart()
         } else {
-          console.log('🔄 建立全新WebRTC连接')
+
           await this.establishFreshConnection()
           this.startWebRTCHandshake()
         }
       } else {
-        console.log('🔄 作为接收方，等待对方重新发起连接')
+
         // 接收方等待对方的ICE重启offer
       }
     } else {
-      console.error('❌ 对方拒绝恢复通话:', data.error)
       this.handleError('通话恢复被拒绝: ' + (data.error || '未知原因'))
     }
   }
@@ -617,7 +619,7 @@ class WebRTCManager {
    */
   async performIceRestart() {
     try {
-      console.log('🔄 开始ICE重启流程...')
+
       
       // 1. 设置ICE重启标志
       const offerOptions = {
@@ -627,7 +629,6 @@ class WebRTCManager {
       }
       
       // 2. 创建新的offer（带ICE重启）
-      console.log('📤 创建ICE重启offer')
       const offer = await this.peerConnection.createOffer(offerOptions)
       await this.peerConnection.setLocalDescription(offer)
       
@@ -640,10 +641,7 @@ class WebRTCManager {
         iceRestart: true  // 标记这是ICE重启
       })
       
-      console.log('✅ ICE重启offer已发送')
-      
     } catch (error) {
-      console.error('❌ ICE重启失败:', error)
       // 如果ICE重启失败，回退到完整重建
       await this.establishFreshConnection()
     }
@@ -654,7 +652,7 @@ class WebRTCManager {
    */
   async establishFreshConnection() {
     try {
-      console.log('🔄 建立全新WebRTC连接...')
+
       
       // 1. 获取本地音频流
       await this.getLocalStream()
@@ -667,10 +665,9 @@ class WebRTCManager {
         this.peerConnection.addTrack(track, this.localStream)
       })
       
-      console.log('✅ 全新连接已建立')
+
       
     } catch (error) {
-      console.error('❌ 建立全新连接失败:', error)
       throw error
     }
   }
@@ -692,11 +689,9 @@ class WebRTCManager {
           offer: offer
         })
         
-        console.log('✅ Offer已发送')
       }
       // 接收方等待offer，然后在handleOffer中创建answer
     } catch (error) {
-      console.error('❌ WebRTC握手失败:', error)
       this.handleError('WebRTC握手失败: ' + error.message)
     }
   }
@@ -706,7 +701,6 @@ class WebRTCManager {
    */
   async handleOffer(data) {
     if (!this.peerConnection) {
-      console.error('❌ PeerConnection不存在，无法处理offer')
       return
     }
     
@@ -722,7 +716,6 @@ class WebRTCManager {
       answer: answer
     })
     
-    console.log('✅ Answer已发送')
   }
 
   /**
@@ -730,12 +723,11 @@ class WebRTCManager {
    */
   async handleAnswer(data) {
     if (!this.peerConnection) {
-      console.error('❌ PeerConnection不存在，无法处理answer')
       return
     }
     
     await this.peerConnection.setRemoteDescription(data.answer)
-    console.log('✅ Answer已处理，WebRTC连接建立中...')
+
     
     // WebRTC握手完成，更新状态为已连接
     this.updateCallStatus('connected')
@@ -770,7 +762,6 @@ class WebRTCManager {
    */
   sendSignal(data) {
     if (!this.websocket) {
-      console.error('WebSocket实例不存在，无法发送信令')
       return false
     }
     
@@ -778,15 +769,6 @@ class WebRTCManager {
       type: 6, // WebRTC信令消息类型
       data: data
     }
-    
-    console.log('发送WebRTC信令:', {
-      messageType: message.type,
-      signalType: data.type,
-      callId: data.callId,
-      targetUserId: data.targetUserId,
-      currentUserId: this.userStore?.userInfo?.uid,
-      websocketType: this.websocket?.constructor?.name
-    })
     
     // 使用ChatWebSocket的send方法，它会自动处理连接状态检查
     this.websocket.send(message)
@@ -845,7 +827,7 @@ class WebRTCManager {
     this.isMuted = false
     this.updateCallStatus('ended')
     
-    console.log('通话结束，所有资源已清理')
+
   }
 
   /**
@@ -866,7 +848,7 @@ class WebRTCManager {
     this.endCall()
     // 移除事件总线监听器
     emitter.off('webrtc-signal', this.handleSignalMessage)
-    console.log('WebRTC管理器已清理事件监听器')
+
   }
 }
 

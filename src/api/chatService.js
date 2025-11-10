@@ -19,5 +19,10 @@ export const sendMsg = (params) => {
   return request.post('/chat/msg', params)
 }
 
+// 撤回消息
+export const recallMsg = (params) => {
+  return request.put('/chat/msg/recall', params)
+}
+
 
 

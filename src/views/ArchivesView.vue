@@ -58,7 +58,7 @@
                             <div v-if="showEditor" ref="notesGridRef" class="notes-grid">
     <FloatingLove 
       v-if="showLove"
-      :imageUrl="'/src/assets/image/emojiSets/贴吧表情/爱.png'"
+      :imageUrl="'@/assets/image/emojiSets/贴吧表情/爱.png'"
       :min-size="halfScreenWidth * 0.2"
       :max-size="halfScreenWidth"
       :duration="3"
@@ -118,23 +118,27 @@
     <transition name="fade">
       <div 
         v-if="showFullscreenEditor" 
-        class="fullscreen-editor-container"
-        :style="editorStyle"
-        @mousedown="startDrag"
-        ref="editorRef"
+        class="fullscreen-editor-overlay"
+        @click="closeFullscreenEditor"
       >
-        <div class="fullscreen-editor-header">
-          <div class="traffic-lights">
-            <button class="traffic-light red" @click="closeFullscreenEditor"></button>
-            <button class="traffic-light yellow"></button>
-            <button class="traffic-light green"></button>
+        <div 
+          class="fullscreen-editor-container"
+          @click.stop
+          ref="editorRef"
+        >
+          <div class="fullscreen-editor-header">
+            <div class="traffic-lights">
+              <button class="traffic-light red" @click="closeFullscreenEditor"></button>
+              <button class="traffic-light yellow"></button>
+              <button class="traffic-light green"></button>
+            </div>
+            <div class="fullscreen-editor-title">Arc Editor</div>
           </div>
-          <div class="fullscreen-editor-title">Arc Editor</div>
+          
+          <FlashEditor ref="fullscreenEditorRef" @save-draft="handleFullscreenSave" />
         </div>
-        
-        <FlashEditor ref="fullscreenEditorRef" @save-draft="handleFullscreenSave" />
       </div>
-  </transition>
+    </transition>
 
     <div class="elegant-divider"></div>
 
@@ -202,72 +206,77 @@
 
 </template>
 <script setup>
-import { ref, computed, onMounted, onUnmounted, onUpdated, onBeforeUpdate, nextTick } from 'vue';
-import { dragAndDrop } from '@formkit/drag-and-drop/vue';
-import DangerButton from '@/components/dangerButton.vue';
-import ResourceDrawer from '@/components/ResourceDrawer.vue';
-import RightKeyPop from '@/components/RightKeyPop.vue';
-import TodoList from '@/components/TodoList.vue';
-import { useTodoStore } from '@/stores/todo.js';
+// #region 导入依赖
+import { ref, computed, onMounted, onUnmounted, onUpdated, onBeforeUpdate, nextTick, watch } from 'vue';
 import { EditPen, Edit, List, Files, Search } from '@element-plus/icons-vue';
 import { Copy, Pencil, Trash2, MoreVertical, Share2, FileText, Send, Pin, PinOff } from 'lucide-vue-next';
-import FlashEditor from '@/components/FlashEditor.vue';
-import FloatingLove from '@/components/FloatingLove.vue';
-import NoteEditModal from '@/components/NoteEditModal.vue';
-import WorningTips from '@/components/WorningTips.vue';
-import MacWindowControls from '@/components/MacWindowControls.vue';
-import Terminal from '@/components/Terminal.vue';
-import { watch } from 'vue';
+import { dragAndDrop } from '@formkit/drag-and-drop/vue';
+
+import DangerButton from '@/components/form/DangerButton.vue';
+import ResourceDrawer from '@/components/business/ResourceDrawer.vue';
+import RightKeyPop from '@/components/interaction/RightKeyPop.vue';
+import TodoList from '@/components/business/TodoList.vue';
+import FlashEditor from '@/components/editor/FlashEditor.vue';
+import FloatingLove from '@/components/layout/FloatingLove.vue';
+import NoteEditModal from '@/components/editor/NoteEditModal.vue';
+import WorningTips from '@/components/feedback/WorningTips.vue';
+import MacWindowControls from '@/components/layout/MacWindowControls.vue';
+import Terminal from '@/components/misc/Terminal.vue';
+
+import { useTodoStore } from '@/stores/todo.js';
 import ArcMessage from '@/utils/ArcMessage';
-const showDrawingBoard = ref(false);
-const isFullscreen = ref(false);
-const showResourceDrawer = ref(false);
-const showTodoList = ref(true);
-const showEditor = ref(true);
-const notes = ref([]);
+// #endregion
 
-// 手动排序函数，确保稳定性
-const sortNotes = () => {
-  // 使用原地排序来确保拖拽库的引用不变
-  notes.value.sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return 0; // 保持原始顺序
-  });
-};
+// #region 数据存储
+// UI显示状态
+const showDrawingBoard = ref(false); // 显示画板
+const isFullscreen = ref(false); // 全屏状态
+const showResourceDrawer = ref(false); // 资源抽屉显示状态
+const showTodoList = ref(true); // TodoList显示状态
+const showEditor = ref(true); // 编辑器显示状态
+const showLove = ref(false); // 彩蛋显示状态
+const showEditModal = ref(false); // 笔记编辑模态框显示状态
+const showWarningTip = ref(false); // 删除警告提示显示状态
+const showFullscreenEditor = ref(false); // 全屏编辑器显示状态
 
-const editor = ref(null);
-const showLove = ref(false);
-const halfScreenWidth = ref(window.innerWidth / 2);
-const editingNote = ref(null);
-const showEditModal = ref(false);
-const showWarningTip = ref(false);
-const noteToDeleteId = ref(null);
-const flashEditorRef = ref(null);
-const flashEditorWrapperRef = ref(null);
-const showFullscreenEditor = ref(false);
-const fullscreenEditorRef = ref(null);
-const rightKeyPopRef = ref(null);
-const notesGridRef = ref(null);
+// 笔记数据
+const notes = ref([]); // 笔记列表
+const editingNote = ref(null); // 当前编辑的笔记
+const noteToDeleteId = ref(null); // 待删除的笔记ID
 
+// DOM引用
+const editor = ref(null); // 编辑器DOM引用
+const flashEditorRef = ref(null); // Flash编辑器组件引用
+const flashEditorWrapperRef = ref(null); // Flash编辑器包装器引用
+const fullscreenEditorRef = ref(null); // 全屏编辑器组件引用
+const rightKeyPopRef = ref(null); // 右键菜单组件引用
+const notesGridRef = ref(null); // 笔记网格DOM引用
+const editorRef = ref(null); // 编辑器引用
+const noteCardRefs = ref({}); // 笔记卡片DOM引用Map
+
+// 其他数据
+const halfScreenWidth = ref(window.innerWidth / 2); // 半屏宽度
+const cmd = ref('https://www.arcwater.com/'); // 命令/网址
+
+// 右键菜单配置
 const contextMenu = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  note: null,
-  items: [],
-  isCalculating: false
+  visible: false, // 菜单显示状态
+  x: 0, // 菜单X坐标
+  y: 0, // 菜单Y坐标
+  note: null, // 当前操作的笔记
+  items: [], // 菜单项列表
+  isCalculating: false // 是否正在计算位置
 });
 
-// 置顶功能切换
-const togglePin = (note) => {
-  note.isPinned = !note.isPinned;
-  sortNotes(); // 重新排序
-  // 保存到本地存储
-  localStorage.setItem('flash-notes', JSON.stringify(notes.value));
-  ArcMessage.success(note.isPinned ? '已置顶' : '已取消置顶');
-};
+// Store
+const todoStore = useTodoStore(); // Todo状态管理
+// #endregion
 
+// #region 计算属性
+/**
+ * 右键菜单项列表
+ * 根据笔记状态动态生成菜单项
+ */
 const contextMenuItems = computed(() => {
   const note = contextMenu.value.note;
   if (!note) return [];
@@ -350,7 +359,51 @@ const contextMenuItems = computed(() => {
     },
   ];
 });
+// #endregion
 
+// #region 工具函数
+/**
+ * 排序笔记，置顶笔记排在前面
+ */
+const sortNotes = () => {
+  notes.value.sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
+  });
+};
+
+/**
+ * 切换笔记置顶状态
+ * @param {Object} note - 笔记对象
+ */
+const togglePin = (note) => {
+  note.isPinned = !note.isPinned;
+  sortNotes();
+  localStorage.setItem('flash-notes', JSON.stringify(notes.value));
+  ArcMessage.success(note.isPinned ? '已置顶' : '已取消置顶');
+};
+
+/**
+ * 根据笔记内容长度获取笔记大小
+ * @param {string} content - 笔记HTML内容
+ * @returns {string} 'small' | 'medium' | 'large'
+ */
+const getNoteSizeFromContent = (content) => {
+  const text = new DOMParser().parseFromString(content, 'text/html').body.textContent || '';
+  const length = text.length;
+  if (length < 50) return 'small';
+  if (length < 150) return 'medium';
+  return 'large';
+};
+// #endregion
+
+// #region 右键菜单处理
+/**
+ * 显示右键菜单
+ * @param {MouseEvent} event - 鼠标事件
+ * @param {Object} note - 笔记对象
+ */
 const showContextMenu = (event, note) => {
   event.preventDefault();
 
@@ -398,6 +451,9 @@ const showContextMenu = (event, note) => {
   });
 };
 
+/**
+ * 隐藏右键菜单
+ */
 const hideContextMenu = () => {
   if (contextMenu.value.visible) {
     contextMenu.value.visible = false;
@@ -407,24 +463,276 @@ const hideContextMenu = () => {
   }
 };
 
-
+/**
+ * 处理键盘事件
+ * @param {KeyboardEvent} e - 键盘事件
+ */
 const handleKeydown = (e) => {
   if (e.key === 'Escape' && showFullscreenEditor.value) {
     closeFullscreenEditor();
   }
 };
+// #endregion
 
+// #region 搜索功能
+const arcwaterSearch = ref(''); // 搜索输入内容
 
-const getNoteSizeFromContent = (content) => {
-  const text = new DOMParser().parseFromString(content, 'text/html').body.textContent || '';
-  const length = text.length;
-  if (length < 50) return 'small';
-  if (length < 150) return 'medium';
-  return 'large';
+/**
+ * 处理搜索操作，支持彩蛋和百度搜索
+ */
+function handleArcwaterSearch() {
+  const searchText = arcwaterSearch.value.trim();
+  if (!searchText) return;
+
+  if (searchText.toLowerCase() === 'senjay') {
+    if (!showLove.value) {
+      showLove.value = true;
+      setTimeout(() => {
+        showLove.value = false;
+      }, 5000);
+    }
+    arcwaterSearch.value = '';
+    return;
+  }
+
+  const q = encodeURIComponent(searchText);
+  window.open(`https://www.baidu.com/s?wd=${q}`, '_blank');
+}
+
+/**
+ * iframe样式，根据全屏状态动态调整
+ */
+const iframeStyle = computed(() => {
+  if (isFullscreen.value) {
+    return {
+      width: '100vw',
+      height: '100vh',
+      borderRadius: '0',
+      boxShadow: 'none',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      zIndex: 4000,
+      background: '#fff'
+    };
+  }
+  return {
+    width: '100%',
+    height: '600px',
+    borderRadius: '16px',
+    boxShadow: '0 2px 12px rgba(60,60,60,0.08)',
+    background: '#f8fafc'
+  };
+});
+
+/**
+ * 切换全屏模式
+ */
+function toggleFullscreen() {
+  showDrawingBoard.value = true;
+  isFullscreen.value = !isFullscreen.value;
+  if (isFullscreen.value) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = '';
+  }
+}
+// #endregion
+
+// #region TodoList管理
+/**
+ * 添加Todo项
+ * @param {Object} payload - Todo数据
+ */
+function handleAddTodo(payload) {
+  todoStore.addTodo(payload);
+}
+
+/**
+ * 更新Todo项
+ * @param {Object} todo - Todo对象
+ */
+function handleUpdateTodo(todo) {
+  todoStore.updateTodo(todo);
+}
+
+/**
+ * 删除Todo项
+ * @param {number} id - Todo ID
+ */
+function handleDeleteTodo(id) {
+  todoStore.deleteTodo(id);
+}
+
+/**
+ * 重新排序Todo列表
+ * @param {Array} newList - 新的Todo列表
+ */
+function handleReorderTodo(newList) {
+  todoStore.reorderTodos(newList);
+}
+// #endregion
+
+// #region 笔记管理
+/**
+ * 保存笔记
+ * @param {string} content - 笔记内容
+ */
+const handleSaveNote = (content) => {
+  const newNote = { 
+    id: Date.now(), 
+    content,
+    isPinned: false,
+    createdAt: new Date().toISOString(),
+  };
+  notes.value.unshift(newNote);
+  sortNotes();
+  localStorage.setItem('flash-notes', JSON.stringify(notes.value));
+  ArcMessage.info("保存修改成功","请尽快提交结果")
+  flashEditorRef.value.clearContent();
 };
 
+/**
+ * 删除笔记（显示确认对话框）
+ * @param {number} noteId - 笔记ID
+ */
+const deleteNote = (noteId) => {
+  noteToDeleteId.value = noteId;
+  showWarningTip.value = true;
+};
 
+/**
+ * 确认删除笔记
+ */
+const confirmDelete = () => {
+  if (noteToDeleteId.value) {
+    notes.value = notes.value.filter(note => note.id !== noteToDeleteId.value);
+    localStorage.setItem('flash-notes', JSON.stringify(notes.value));
+  }
+  cancelDelete();
+};
 
+/**
+ * 取消删除操作
+ */
+const cancelDelete = () => {
+  showWarningTip.value = false;
+  noteToDeleteId.value = null;
+};
+
+/**
+ * 编辑笔记
+ * @param {Object} note - 笔记对象
+ */
+const editNote = (note) => {
+  editingNote.value = note;
+  showEditModal.value = true;
+};
+
+/**
+ * 保存笔记编辑
+ * @param {Object} updatedNote - 更新后的笔记对象
+ */
+const handleEditSave = (updatedNote) => {
+  const index = notes.value.findIndex(note => note.id === updatedNote.id);
+  if (index !== -1) {
+    notes.value[index].content = updatedNote.content;
+  }
+  localStorage.setItem('flash-notes', JSON.stringify(notes.value));
+  if(updatedNote.isSubmit === 0)
+  ArcMessage.info("保存修改成功","请尽快提交结果")
+};
+
+/**
+ * 关闭编辑模态框
+ */
+const closeEditModal = () => {
+  showEditModal.value = false;
+  editingNote.value = null;
+};
+
+/**
+ * 打开全屏编辑器
+ */
+const openFullscreenEditor = async () => {
+  if (!flashEditorRef.value) return;
+  const content = await flashEditorRef.value.getContent();
+  showFullscreenEditor.value = true;
+  await nextTick();
+  if (fullscreenEditorRef.value) {
+    fullscreenEditorRef.value.setContent(content);
+  }
+};
+
+/**
+ * 关闭全屏编辑器
+ */
+const closeFullscreenEditor = () => {
+  showFullscreenEditor.value = false;
+};
+
+/**
+ * 保存全屏编辑器内容
+ * @param {string} content - 编辑器内容
+ */
+const handleFullscreenSave = async (content) => {
+  if (flashEditorRef.value) {
+    flashEditorRef.value.setContent(content);
+  }
+  await handleSaveNote(content);
+  closeFullscreenEditor();
+};
+// #endregion
+
+// #region 笔记卡片溢出检测
+/**
+ * 设置笔记卡片DOM引用
+ * @param {HTMLElement} el - DOM元素
+ * @param {number} id - 笔记ID
+ */
+const setNoteCardRef = (el, id) => {
+  if (el) {
+    noteCardRefs.value[id] = el;
+  }
+};
+
+/**
+ * 检查所有笔记卡片是否溢出
+ */
+const checkAllCardsOverflow = () => {
+  nextTick(() => {
+    for (const id in noteCardRefs.value) {
+      const cardEl = noteCardRefs.value[id];
+      if (cardEl) {
+        const contentEl = cardEl.querySelector('.note-content');
+        if (contentEl) {
+          const isOverflowing = contentEl.scrollHeight > contentEl.clientHeight;
+          if (isOverflowing) {
+            cardEl.classList.add('is-overflowing');
+          } else {
+            cardEl.classList.remove('is-overflowing');
+          }
+        }
+      }
+    }
+  });
+};
+// #endregion
+
+// #region 编辑器滚动控制
+/**
+ * 处理编辑器滚轮事件
+ * @param {WheelEvent} event - 滚轮事件
+ */
+const handleEditorWheel = (event) => {
+  const wrapper = flashEditorWrapperRef.value;
+  if (wrapper && !wrapper.contains(document.activeElement)) {
+    event.preventDefault();
+  }
+};
+// #endregion
+
+// #region 生命周期钩子
 onMounted(() => {
   window.addEventListener('keydown', handleKeydown);
 
@@ -449,14 +757,6 @@ onMounted(() => {
   }
 });
 
-// 控制编辑器仅在聚焦时滚动
-const handleEditorWheel = (event) => {
-  const wrapper = flashEditorWrapperRef.value;
-  if (wrapper && !wrapper.contains(document.activeElement)) {
-    event.preventDefault();
-  }
-};
-
 watch(showEditor, (isShown) => {
   nextTick(() => {
     const wrapper = flashEditorWrapperRef.value;
@@ -470,24 +770,6 @@ watch(showEditor, (isShown) => {
   });
 });
 
-onUnmounted(() => {
-  window.removeEventListener('keydown', handleKeydown);
-  // 组件卸载时，确保清理事件监听器
-  window.removeEventListener('click', hideContextMenu);
-  window.removeEventListener('contextmenu', hideContextMenu);
-});
-
-const todoStore = useTodoStore();
-const cmd = ref('https://www.arcwater.com/');
-
-// --- 笔记卡片溢出检测逻辑 ---
-const noteCardRefs = ref({});
-const setNoteCardRef = (el, id) => {
-  if (el) {
-    noteCardRefs.value[id] = el;
-  }
-};
-
 onBeforeUpdate(() => {
   noteCardRefs.value = {};
 });
@@ -500,170 +782,21 @@ onUpdated(() => {
   checkAllCardsOverflow();
 });
 
-const checkAllCardsOverflow = () => {
-  nextTick(() => {
-    for (const id in noteCardRefs.value) {
-      const cardEl = noteCardRefs.value[id];
-      if (cardEl) {
-        const contentEl = cardEl.querySelector('.note-content');
-        if (contentEl) {
-          // CSS handles max-height, JS just checks if it overflowed to add the gradient class.
-          const isOverflowing = contentEl.scrollHeight > contentEl.clientHeight;
-          if (isOverflowing) {
-            cardEl.classList.add('is-overflowing');
-          } else {
-            cardEl.classList.remove('is-overflowing');
-          }
-        }
-      }
-    }
-  });
-};
-
-
-
-// 新增：arcwater搜索框内容
-const arcwaterSearch = ref('');
-function handleArcwaterSearch() {
-  const searchText = arcwaterSearch.value.trim();
-  if (!searchText) return;
-
-  if (searchText.toLowerCase() === 'senjay') {
-    if (!showLove.value) {
-      showLove.value = true;
-      setTimeout(() => {
-        showLove.value = false;
-      }, 5000); // Disappears after 5 seconds
-    }
-    arcwaterSearch.value = ''; // Clear input after triggering
-    return; // Prevent the default search action
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+  window.removeEventListener('click', hideContextMenu);
+  window.removeEventListener('contextmenu', hideContextMenu);
+  
+  const wrapper = flashEditorWrapperRef.value;
+  if (wrapper) {
+    wrapper.removeEventListener('wheel', handleEditorWheel);
   }
-
-  const q = encodeURIComponent(searchText);
-  window.open(`https://www.baidu.com/s?wd=${q}`, '_blank');
-}
-
-const iframeStyle = computed(() => {
-  if (isFullscreen.value) {
-    return {
-      width: '100vw',
-      height: '100vh',
-      borderRadius: '0',
-      boxShadow: 'none',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      zIndex: 4000,
-      background: '#fff'
-    };
-  }
-  return {
-    width: '100%',
-    height: '600px',
-    borderRadius: '16px',
-    boxShadow: '0 2px 12px rgba(60,60,60,0.08)',
-    background: '#f8fafc'
-  };
+  
+  document.body.style.overflow = '';
 });
+// #endregion
 
-function toggleFullscreen() {
-  showDrawingBoard.value = true;
-  isFullscreen.value = !isFullscreen.value;
-  if (isFullscreen.value) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = '';
-  }
-}
-
-function handleAddTodo(payload) {
-  todoStore.addTodo(payload);
-}
-function handleUpdateTodo(todo) {
-  todoStore.updateTodo(todo);
-}
-function handleDeleteTodo(id) {
-  todoStore.deleteTodo(id);
-}
-
-function handleReorderTodo(newList) {
-  todoStore.reorderTodos(newList);
-}
-
-const handleSaveNote = (content) => {
-  const newNote = { 
-    id: Date.now(), 
-    content,
-    isPinned: false,
-    createdAt: new Date().toISOString(),
-  };
-  notes.value.unshift(newNote);
-  sortNotes(); // 添加后重新排序
-  localStorage.setItem('flash-notes', JSON.stringify(notes.value));
-  ArcMessage.info("保存修改成功","请尽快提交结果")
-  flashEditorRef.value.clearContent();
-};
-
-const deleteNote = (noteId) => {
-  noteToDeleteId.value = noteId;
-  showWarningTip.value = true;
-};
-
-const confirmDelete = () => {
-  if (noteToDeleteId.value) {
-    notes.value = notes.value.filter(note => note.id !== noteToDeleteId.value);
-    localStorage.setItem('flash-notes', JSON.stringify(notes.value));
-  }
-  cancelDelete();
-};
-
-const cancelDelete = () => {
-  showWarningTip.value = false;
-  noteToDeleteId.value = null;
-};
-
-const editNote = (note) => {
-  editingNote.value = note;
-  showEditModal.value = true;
-};
-
-const handleEditSave = (updatedNote) => {
-  const index = notes.value.findIndex(note => note.id === updatedNote.id);
-  if (index !== -1) {
-    notes.value[index].content = updatedNote.content;
-  }
-  localStorage.setItem('flash-notes', JSON.stringify(notes.value));
-  if(updatedNote.isSubmit === 0)
-  ArcMessage.info("保存修改成功","请尽快提交结果")
-};
-
-const closeEditModal = () => {
-  showEditModal.value = false;
-  editingNote.value = null;
-};
-
-const openFullscreenEditor = async () => {
-  if (!flashEditorRef.value) return;
-  const content = await flashEditorRef.value.getContent();
-  showFullscreenEditor.value = true;
-  await nextTick();
-  if (fullscreenEditorRef.value) {
-    fullscreenEditorRef.value.setContent(content);
-  }
-};
-
-const closeFullscreenEditor = () => {
-  showFullscreenEditor.value = false;
-};
-
-const handleFullscreenSave = async (content) => {
-  if (flashEditorRef.value) {
-    flashEditorRef.value.setContent(content);
-  }
-  await handleSaveNote(content);
-  closeFullscreenEditor();
-};
-
+// #region 外部链接配置
 const glassBtns = [
   {
     label: '翻译',
@@ -1060,7 +1193,6 @@ onUnmounted(() => {
   height: 100%;
   max-height: 500px; /* 限制编辑器最大高度 */
   overflow: hidden; /* 移除外层滚动，让内部处理 */
-  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -1310,54 +1442,53 @@ onUnmounted(() => {
 .delete-note-btn:hover {
   background: rgba(239, 68, 68, 0.2);
 }
-.dark-mode .delete-note-btn {
-  background: rgba(239, 68, 68, 0.1) !important;
-  color: #ef4444 !important;
-  font-weight: 600 !important;
-}
-.dark-mode .delete-note-btn:hover {
-  background: rgba(239, 68, 68, 0.2) !important;
-}
-.dark-mode .edit-note-btn {
-  background: rgba(59, 130, 246, 0.1) !important;
-  color: #3b82f6 !important;
-}
-.dark-mode .edit-note-btn:hover {
-  background: rgba(59, 130, 246, 0.2) !important;
-}
 
 /* Fullscreen Editor Styles */
 .fullscreen-editor-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.8);
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 50000;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 .fullscreen-editor-container {
   position: relative;
   width: 90vw;
   height: 90vh;
-  background-color: var(--bg-color, #fff);
+  max-width: 1200px;
+  max-height: 800px;
+  background-color: #ffffff;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.dark-mode .fullscreen-editor-container {
+  background-color: #1f2937;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.4);
 }
 
 .fullscreen-editor-header {
   display: flex;
   align-items: center;
   padding: 12px;
-  background-color: var(--header-bg-color, #f0f0f0);
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 16px 16px 0 0;
 }
 
 .dark-mode .fullscreen-editor-header {
@@ -1404,3 +1535,5 @@ onUnmounted(() => {
   overflow-y: auto;
 }
 </style>
+
+

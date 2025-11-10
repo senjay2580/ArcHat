@@ -81,76 +81,6 @@
   <!-- 仪表盘卡片布局结束 -->
   </div>
 
-  <div class="notice-leave-row">
-    <div class="notice-card-demo">
-      <div class="notice-card-demo-title">联系平台</div>
-      <div class="notice-card-demo-desc">
-        <!-- 社交玻璃片区域 -->
-        <div class="social-glass-row">
-          <a class="social-glass-btn" href="https://github.com/" target="_blank" title="GitHub">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path fill="#222" d="M12 2C6.477 2 2 6.484 2 12.021c0 4.428 2.865 8.184 6.839 9.504.5.092.682-.217.682-.483 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.342-3.369-1.342-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.004.07 1.532 1.032 1.532 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.339-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.295 2.748-1.025 2.748-1.025.546 1.378.202 2.397.1 2.65.64.7 1.028 1.595 1.028 2.688 0 3.847-2.338 4.695-4.566 4.944.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.749 0 .268.18.579.688.481C19.138 20.2 22 16.448 22 12.021 22 6.484 17.523 2 12 2Z"/></svg>
-          </a>
-          <a class="social-glass-btn" href="https://facebook.com/" target="_blank" title="Facebook">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path fill="#1877F3" d="M22.675 0h-21.35C.595 0 0 .592 0 1.326v21.348C0 23.408.595 24 1.325 24h11.495v-9.294H9.692v-3.622h3.128V8.413c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.797.143v3.24l-1.918.001c-1.504 0-1.797.715-1.797 1.763v2.313h3.587l-.467 3.622h-3.12V24h6.116C23.406 24 24 23.408 24 22.674V1.326C24 .592 23.406 0 22.675 0"/></svg>
-          </a>
-          <a class="social-glass-btn" href="https://twitter.com/" target="_blank" title="Twitter">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path fill="#1DA1F2" d="M24 4.557a9.83 9.83 0 0 1-2.828.775 4.932 4.932 0 0 0 2.165-2.724c-.951.564-2.005.974-3.127 1.195A4.916 4.916 0 0 0 16.616 3c-2.72 0-4.924 2.206-4.924 4.924 0 .386.044.763.127 1.124C7.728 8.807 4.1 6.884 1.671 3.965c-.423.722-.666 1.561-.666 2.475 0 1.708.87 3.216 2.188 4.099a4.904 4.904 0 0 1-2.229-.616c-.054 2.281 1.581 4.415 3.949 4.89a4.936 4.936 0 0 1-2.224.084c.627 1.956 2.444 3.377 4.6 3.417A9.867 9.867 0 0 1 0 21.543a13.94 13.94 0 0 0 7.548 2.212c9.057 0 14.009-7.513 14.009-14.009 0-.213-.005-.425-.014-.636A10.012 10.012 0 0 0 24 4.557z"/></svg>
-          </a>
-          <a class="social-glass-btn" href="https://linkedin.com/" target="_blank" title="LinkedIn">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path fill="#0077B5" d="M20.447 20.452h-3.554v-5.569c0-1.327-.025-3.037-1.849-3.037-1.851 0-2.132 1.445-2.132 2.939v5.667H9.358V9h3.414v1.561h.049c.476-.899 1.637-1.849 3.37-1.849 3.602 0 4.267 2.369 4.267 5.455v6.285zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zM7.119 20.452H3.554V9h3.565v11.452zM22.225 0H1.771C.792 0 0 .771 0 1.723v20.549C0 23.229.792 24 1.771 24h20.451C23.2 24 24 23.229 24 22.271V1.723C24 .771 23.2 0 22.225 0z"/></svg>
-          </a>
-          <a class="social-glass-btn" href="#" title="微信">
-           <svg t="1753239347883" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4514" width="32"><path d="M337.387283 341.82659c-17.757225 0-35.514451 11.83815-35.514451 29.595375s17.757225 29.595376 35.514451 29.595376 29.595376-11.83815 29.595376-29.595376c0-18.49711-11.83815-29.595376-29.595376-29.595375zM577.849711 513.479769c-11.83815 0-22.936416 12.578035-22.936416 23.6763 0 12.578035 11.83815 23.676301 22.936416 23.676301 17.757225 0 29.595376-11.83815 29.595376-23.676301s-11.83815-23.676301-29.595376-23.6763zM501.641618 401.017341c17.757225 0 29.595376-12.578035 29.595376-29.595376 0-17.757225-11.83815-29.595376-29.595376-29.595375s-35.514451 11.83815-35.51445 29.595375 17.757225 29.595376 35.51445 29.595376zM706.589595 513.479769c-11.83815 0-22.936416 12.578035-22.936416 23.6763 0 12.578035 11.83815 23.676301 22.936416 23.676301 17.757225 0 29.595376-11.83815 29.595376-23.676301s-11.83815-23.676301-29.595376-23.6763z" fill="#28C445" p-id="4515"></path><path d="M510.520231 2.959538C228.624277 2.959538 0 231.583815 0 513.479769s228.624277 510.520231 510.520231 510.520231 510.520231-228.624277 510.520231-510.520231-228.624277-510.520231-510.520231-510.520231zM413.595376 644.439306c-29.595376 0-53.271676-5.919075-81.387284-12.578034l-81.387283 41.433526 22.936416-71.768786c-58.450867-41.433526-93.965318-95.445087-93.965317-159.815029 0-113.202312 105.803468-201.988439 233.803468-201.98844 114.682081 0 216.046243 71.028902 236.023121 166.473989-7.398844-0.739884-14.797688-1.479769-22.196532-1.479769-110.982659 1.479769-198.289017 85.086705-198.289017 188.67052 0 17.017341 2.959538 33.294798 7.398844 49.572255-7.398844 0.739884-15.537572 1.479769-22.936416 1.479768z m346.265896 82.867052l17.757225 59.190752-63.630058-35.514451c-22.936416 5.919075-46.612717 11.83815-70.289017 11.83815-111.722543 0-199.768786-76.947977-199.768786-172.393063-0.739884-94.705202 87.306358-171.653179 198.289017-171.65318 105.803468 0 199.028902 77.687861 199.028902 172.393064 0 53.271676-34.774566 100.624277-81.387283 136.138728z" fill="#28C445" p-id="4516"></path></svg>
-          </a>
-          <a class="social-glass-btn" href="#" title="QQ">
-            <svg t="1753239600857" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="6653" width="32" ><path d="M511.09761 957.257c-80.159 0-153.737-25.019-201.11-62.386-24.057 6.702-54.831 17.489-74.252 30.864-16.617 11.439-14.546 23.106-11.55 27.816 13.15 20.689 225.583 13.211 286.912 6.767v-3.061z" fill="#FAAD08" p-id="6654"></path><path d="M496.65061 957.257c80.157 0 153.737-25.019 201.11-62.386 24.057 6.702 54.83 17.489 74.253 30.864 16.616 11.439 14.543 23.106 11.55 27.816-13.15 20.689-225.584 13.211-286.914 6.767v-3.061z" fill="#FAAD08" p-id="6655"></path><path d="M497.12861 474.524c131.934-0.876 237.669-25.783 273.497-35.34 8.541-2.28 13.11-6.364 13.11-6.364 0.03-1.172 0.542-20.952 0.542-31.155C784.27761 229.833 701.12561 57.173 496.64061 57.162 292.15661 57.173 209.00061 229.832 209.00061 401.665c0 10.203 0.516 29.983 0.547 31.155 0 0 3.717 3.821 10.529 5.67 33.078 8.98 140.803 35.139 276.08 36.034h0.972z" fill="#000000" p-id="6656"></path><path d="M860.28261 619.782c-8.12-26.086-19.204-56.506-30.427-85.72 0 0-6.456-0.795-9.718 0.148-100.71 29.205-222.773 47.818-315.792 46.695h-0.962C410.88561 582.017 289.65061 563.617 189.27961 534.698 185.44461 533.595 177.87261 534.063 177.87261 534.063 166.64961 563.276 155.56661 593.696 147.44761 619.782 108.72961 744.168 121.27261 795.644 130.82461 796.798c20.496 2.474 79.78-93.637 79.78-93.637 0 97.66 88.324 247.617 290.576 248.996a718.01 718.01 0 0 1 5.367 0C708.80161 950.778 797.12261 800.822 797.12261 703.162c0 0 59.284 96.111 79.783 93.637 9.55-1.154 22.093-52.63-16.623-177.017" fill="#000000" p-id="6657"></path><path d="M434.38261 316.917c-27.9 1.24-51.745-30.106-53.24-69.956-1.518-39.877 19.858-73.207 47.764-74.454 27.875-1.224 51.703 30.109 53.218 69.974 1.527 39.877-19.853 73.2-47.742 74.436m206.67-69.956c-1.494 39.85-25.34 71.194-53.24 69.956-27.888-1.238-49.269-34.559-47.742-74.435 1.513-39.868 25.341-71.201 53.216-69.974 27.909 1.247 49.285 34.576 47.767 74.453" fill="#FFFFFF" p-id="6658"></path><path d="M683.94261 368.627c-7.323-17.609-81.062-37.227-172.353-37.227h-0.98c-91.29 0-165.031 19.618-172.352 37.227a6.244 6.244 0 0 0-0.535 2.505c0 1.269 0.393 2.414 1.006 3.386 6.168 9.765 88.054 58.018 171.882 58.018h0.98c83.827 0 165.71-48.25 171.881-58.016a6.352 6.352 0 0 0 1.002-3.395c0-0.897-0.2-1.736-0.531-2.498" fill="#FAAD08" p-id="6659"></path><path d="M467.63161 256.377c1.26 15.886-7.377 30-19.266 31.542-11.907 1.544-22.569-10.083-23.836-25.978-1.243-15.895 7.381-30.008 19.25-31.538 11.927-1.549 22.607 10.088 23.852 25.974m73.097 7.935c2.533-4.118 19.827-25.77 55.62-17.886 9.401 2.07 13.75 5.116 14.668 6.316 1.355 1.77 1.726 4.29 0.352 7.684-2.722 6.725-8.338 6.542-11.454 5.226-2.01-0.85-26.94-15.889-49.905 6.553-1.579 1.545-4.405 2.074-7.085 0.242-2.678-1.834-3.786-5.553-2.196-8.135" fill="#000000" p-id="6660"></path><path d="M504.33261 584.495h-0.967c-63.568 0.752-140.646-7.504-215.286-21.92-6.391 36.262-10.25 81.838-6.936 136.196 8.37 137.384 91.62 223.736 220.118 224.996H506.48461c128.498-1.26 211.748-87.612 220.12-224.996 3.314-54.362-0.547-99.938-6.94-136.203-74.654 14.423-151.745 22.684-215.332 21.927" fill="#FFFFFF" p-id="6661"></path><path d="M323.27461 577.016v137.468s64.957 12.705 130.031 3.91V591.59c-41.225-2.262-85.688-7.304-130.031-14.574" fill="#EB1C26" p-id="6662"></path><path d="M788.09761 432.536s-121.98 40.387-283.743 41.539h-0.962c-161.497-1.147-283.328-41.401-283.744-41.539l-40.854 106.952c102.186 32.31 228.837 53.135 324.598 51.926l0.96-0.002c95.768 1.216 222.4-19.61 324.6-51.924l-40.855-106.952z" fill="#EB1C26" p-id="6663"></path></svg>
-          </a>
-          <a class="social-glass-btn" href="https://google.com/" target="_blank" title="Google">
-            <svg t="1753239711396" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8618" width="32" ><path d="M69.12 929.28L222.72 960V412.16c-51.2-37.376-102.4-75.264-153.6-112.64v629.76z" fill="#3399FF" p-id="8619"></path><path d="M514.56 632.32C366.08 521.216 217.6 410.624 69.12 299.52c-3.584-6.144-11.264-20.992-10.24-40.96 1.536-24.576 15.36-40.448 20.48-46.08 13.312-13.824 28.16-18.432 35.84-20.48 15.872-4.096 29.184-1.536 35.84 0 121.344 88.576 242.176 177.664 363.52 266.24 95.744-71.68 190.976-143.36 286.72-215.04v179.2c-95.744 70.144-190.976 139.776-286.72 209.92z" fill="#FF3333" p-id="8620"></path><path d="M954.88 929.28V304.64c-51.2 39.424-102.4 78.336-153.6 117.76v542.72c51.2-11.776 102.4-24.064 153.6-35.84z" fill="#339966" p-id="8621"></path><path d="M801.28 243.2v174.08c51.2-37.376 102.4-75.264 153.6-112.64 1.536-11.776 3.584-24.064 5.12-35.84-0.512-8.704-2.56-26.112-15.36-40.96-9.216-10.752-19.968-15.872-30.72-20.48-16.384-7.168-31.232-9.728-40.96-10.24-24.064 15.36-47.616 30.72-71.68 46.08z" fill="#FFCC00" p-id="8622"></path></svg>
-          </a>
-          <a class="social-glass-btn" href="mailto:example@email.com" title="gitee">
-            <svg t="1753239775028" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="10674" width="32" ><path d="M978.462488 409.612507H455.099994a45.512499 45.512499 0 0 0-45.512499 45.5v113.749999a45.499999 45.499999 0 0 0 45.512499 45.512499h318.624997a45.499999 45.499999 0 0 1 45.499999 45.499999v22.7625a136.524998 136.524998 0 0 1-136.524998 136.524999h-432.374995a45.512499 45.512499 0 0 1-45.5125-45.5V341.350008a136.512498 136.512498 0 0 1 136.524999-136.524998h637.062492a45.512499 45.512499 0 0 0 45.5125-45.487499l0.099999-113.749999A45.512499 45.512499 0 0 0 978.462488 0.000012H341.324996C152.824998 0.000012 0 152.825011 0 341.325008v637.137493a45.512499 45.512499 0 0 0 45.499999 45.512499h671.249992c169.662498 0 307.199996-137.499998 307.199997-307.187496V455.125007a45.512499 45.512499 0 0 0-45.5125-45.5125z m0 0" fill="#C71D23" p-id="10675"></path></svg>
-          </a>
-          <a class="social-glass-btn" href="https://mail.qq.com/" target="_blank" title="QQ邮箱">
-           <svg t="1753239743042" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9707" width="32" ><path d="M130.88793283 512l-175.64295268-178.95697067H-147.48957709v381.11206717h102.73455724v-271.74947398l172.32893471 178.95697066 182.27098864-185.58500661v271.74947396H412.57946075v-79.53643139c-33.14017975-33.14017975-49.71026963-76.22241343-49.71026964-122.61866509 0-49.71026963 19.88410785-92.79250331 49.71026964-122.61866508v-53.02428761h-102.73455725L130.88793283 512z" fill="#2C91DE" p-id="9708"></path><path d="M760.55134815 584.90839547c-23.19812583 0-39.7682157 19.88410785-39.7682157 19.88410784-72.90839547 66.2803595-178.95697067 76.22241343-261.80742006 23.19812583 39.7682157 59.65232355 106.0485752 99.42053925 182.27098864 99.42053925 62.96634153 0 122.61866509-26.51214381 162.3868808-72.90839545 0 0 3.31401797-16.57008987 3.31401798-26.5121438-6.62803595-26.51214381-23.19812583-43.08223369-46.39625166-43.08223367z" fill="#ED4636" p-id="9709"></path><path d="M906.36813906 432.46356859h89.47848533V710.84107852h-89.47848533v-278.37750993z m175.64295269-139.18875496h89.47848534V710.84107852h-89.47848534V293.27481363zM893.11206717 349.6131192c0 33.14017975 26.51214381 56.33830558 56.33830558 56.3383056 33.14017975 0 56.33830558-26.51214381 56.33830556-56.3383056 0-29.82616178-26.51214381-56.33830558-56.33830556-56.33830557s-56.33830558 23.19812583-56.33830558 56.33830557z" fill="#2C91DE" p-id="9710"></path><path d="M681.01491675 296.58883161s-16.57008987 3.31401797-26.51214381 9.94205392c-16.57008987 13.2560719-23.19812583 36.45419773-9.94205392 56.33830558 13.2560719 19.88410785 36.45419773 23.19812583 36.45419773 23.19812583 49.71026963 16.57008987 92.79250331 49.71026963 122.61866508 96.10652128 19.88410785 36.45419773 29.82616178 76.22241343 26.5121438 119.30464711 33.14017975-62.96634153 33.14017975-139.18875497-3.31401798-205.46911447-33.14017975-49.71026963-86.16446736-89.47848533-145.8167909-99.42053925z" fill="#82D531" p-id="9711"></path><path d="M512 571.65232355c13.2560719-19.88410785 3.31401797-43.08223369 3.31401797-43.08223368-13.2560719-53.02428761-3.31401797-106.0485752 23.19812584-152.44482685 19.88410785-36.45419773 53.02428761-62.96634153 89.47848533-82.85044939-69.59437748 3.31401797-135.87473698 39.7682157-175.64295269 106.0485752-29.82616178 53.02428761-36.45419773 115.99062914-16.57008988 175.6429527 0 0 9.94205392 9.94205392 23.19812582 16.57008988 16.57008987 9.94205392 39.7682157 3.31401797 53.02428761-19.88410786z" fill="#F8BE32" p-id="9712"></path><path d="M714.1550965 535.19812583c-3.31401797-16.57008987-16.57008987-29.82616178-16.57008989-29.82616178 3.31401797-16.57008987-3.31401797-16.57008987-3.31401797-16.57008988 0-49.71026963-43.08223369-46.39625165-43.08223367-46.39625165s-43.08223369 0-43.08223369 46.39625165c0 0-6.62803595 3.31401797-3.31401797 16.57008988 0 0-13.2560719 9.94205392-16.57008988 29.82616178 0 0-3.31401797 29.82616178 13.2560719 3.31401798 0 0 3.31401797 9.94205392 9.94205392 16.57008988 0 0-9.94205392 3.31401797-9.94205392 13.25607189 0 0 0 9.94205392 23.19812584 9.94205392 0 0 16.57008987 0 23.19812581-9.94205392h6.62803596c6.62803595 6.62803595 23.19812583 9.94205392 23.19812582 9.94205392 26.51214381 0 23.19812583-9.94205392 23.19812583-9.94205392 0-9.94205392-9.94205392-13.2560719-9.94205392-13.25607189 6.62803595-9.94205392 9.94205392-16.57008987 9.94205392-16.57008988 16.57008987 26.51214381 13.2560719-3.31401797 13.25607191-3.31401798z" fill="#1599FF" p-id="9713"></path></svg>
-          </a>
-          <a class="social-glass-btn" href="https://outlook.live.com/" target="_blank" title="Outlook">
-              <img src="/src/assets/image/arcwater_logo.png" alt="" style="width: 40px;">
-          </a>
-        </div>
-      </div>
-      <a class="notice-card-demo-link" href="#" target="_blank" title="外部链接">
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16"><!-- Icon from Material Icon Theme by Material Extensions - https://github.com/material-extensions/vscode-material-icon-theme/blob/main/LICENSE --><path fill="#20baff" d="M8.002 10.45A2.45 2.45 0 0 1 5.552 8a2.45 2.45 0 0 1 2.45-2.45A2.45 2.45 0 0 1 10.452 8a2.45 2.45 0 0 1-2.45 2.45m5.2-1.771c.029-.224.05-.448.05-.679a6 6 0 0 0-.05-.7l1.478-1.141a.35.35 0 0 0 .084-.448l-1.4-2.422a.344.344 0 0 0-.427-.154l-1.743.7a5 5 0 0 0-1.183-.686l-.26-1.855A.354.354 0 0 0 9.402 1h-2.8a.354.354 0 0 0-.35.294l-.258 1.855a5 5 0 0 0-1.183.686l-1.743-.7a.344.344 0 0 0-.427.154l-1.4 2.422a.345.345 0 0 0 .084.448L2.8 7.3a6 6 0 0 0-.05.7c0 .231.022.455.05.679L1.324 9.841a.345.345 0 0 0-.084.448l1.4 2.422c.084.154.273.21.427.154l1.743-.707c.364.28.742.518 1.183.693l.259 1.855a.354.354 0 0 0 .35.294h2.8a.354.354 0 0 0 .35-.294l.259-1.855a5 5 0 0 0 1.183-.693l1.743.707c.154.056.343 0 .427-.154l1.4-2.422a.35.35 0 0 0-.084-.448z"/></svg>
-      </a>
-    </div>
-    <div class="notice-leave-message-section notice-leave-message-section-row">
-      <div class="feedback-card">
-        <div class="feedback-title">输入反馈</div>
-        <div class="feedback-input-area">
-          <textarea
-            v-model="leaveInput"
-            class="feedback-textarea"
-            placeholder="Your feedback..."
-            maxlength="120"
-            rows="4"
-          ></textarea>
-        </div>
-        <div class="feedback-actions">
-          <div class="feedback-emojis">
-            <button class="feedback-emoji-btn" title="开心" @click="selectEmoji('smile')">😊</button>
-            <button class="feedback-emoji-btn" title="不开心" @click="selectEmoji('sad')">😞</button>
-          </div>
-          <button class="feedback-send-btn" :disabled="!leaveInput.trim()" @click="handleLeaveSubmit">
-            <svg width="28" height="28" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
-          </button>
-        </div>
-      </div>
-    
-    </div>
-  </div>
-
-  
-
   <div class="notice-grid-section-pc-standalone">
     <h2 class="notice-grid-title-pc">更多服务</h2>
     <div class="notice-grid-pc-standalone">
@@ -168,9 +98,12 @@
 </template>
 
 <script setup>
-import { ref, computed, defineComponent, h } from 'vue'
-import PurpleInput from '@/components/PurpleInput.vue'
-// 可复用的搜索和过滤图标组件
+// #region 导入依赖
+import { ref, computed, defineComponent, h } from 'vue';
+import PurpleInput from '@/components/form/PurpleInput.vue';
+// #endregion
+
+// #region 图标组件定义
 const SearchIcon = defineComponent({
   name: 'SearchIcon',
   render() {
@@ -195,8 +128,8 @@ const FilterIcon = defineComponent({
       h('path', { d: 'M10 17h4', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round' })
     ])
   }
-})
-// 系统消息类型图标
+});
+
 const UpdateMajorIcon = defineComponent({
   name: 'UpdateMajorIcon',
   render() {
@@ -222,12 +155,15 @@ const BugFixIcon = defineComponent({
       h('path', { fill: '#21e208', 'fill-rule': 'evenodd', d: 'M11 6.5c-1.14 0-2.157.532-2.81 1.36l-.68-.338a.716.716 0 0 0-.958.318a.71.71 0 0 0 .319.953l.679.338a3.5 3.5 0 0 0-.121.922v.236h-.715A.71.71 0 0 0 6 11c0 .392.32.71.714.71h.715v.237q.001.48.12.922l-.678.338a.71.71 0 0 0-.32.953c.177.35.606.493.959.318l.68-.338A3.57 3.57 0 0 0 11 15.5c1.14 0 2.157-.532 2.81-1.36l.68.338a.716.716 0 0 0 .958-.318a.71.71 0 0 0-.319-.953l-.679-.338q.12-.442.121-.922v-.236h.715A.71.71 0 0 0 16 11c0-.392-.32-.71-.714-.71h-.715v-.237q-.002-.48-.12-.922l.678-.338a.71.71 0 0 0 .32-.953a.716.716 0 0 0-.959-.318l-.68.338A3.57 3.57 0 0 0 11 6.5m0 1.42c-.933 0-1.726.594-2.02 1.422h4.041a2.14 2.14 0 0 0-2.02-1.421m-2.143 4.027v-1.184h1.429v3.194a2.13 2.13 0 0 1-1.429-2.01m2.858 2.01v-3.194h1.428v1.184c0 .928-.596 1.718-1.428 2.01', 'clip-rule': 'evenodd' })
     ])
   }
-})
+});
+// #endregion
 
-const searchText = ref('')
+// #region 数据存储
+// 搜索
+const searchText = ref(''); // 搜索关键词
 
-// 仪表盘数据
-const dashboardStats = [
+// 仪表盘统计数据
+const dashboardStats = [ // 仪表盘卡片数据
   {
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="M.975 7q0-2.5 1.763-4.262T7 .974V3Q5.35 3 4.175 4.175T3 7zM5.3 18.725Q3.025 16.45 3.025 13.25T5.3 7.775L7.05 6l.3.3q.725.725.725 1.762T7.35 9.826l-.35.35q-.3.3-.3.713t.3.712l.9.9q.65.65.65 1.575T7.9 15.65l1.075 1.075q1.1-1.1 1.1-2.637T8.95 11.425l-.55-.55q.65-.65.925-1.463T9.55 7.75l4.475-4.475q.3-.3.713-.3t.712.3t.3.712t-.3.713l-4.675 4.675l1.05 1.05l6.025-6q.3-.3.7-.3t.7.3t.3.7t-.3.7l-6 6.025l1.05 1.05l5.3-5.3q.3-.3.713-.3t.712.3t.3.713t-.3.712l-5.3 5.3l1.05 1.05l4.05-4.05q.3-.3.713-.3t.712.3t.3.713t-.3.712l-6 5.975Q13.975 21 10.775 21T5.3 18.725m11.7 4.3V21q1.65 0 2.825-1.175T21 17h2.025q0 2.5-1.763 4.263T17 23.025"/></svg>` ,
     value: '1020',
@@ -251,8 +187,8 @@ const dashboardStats = [
   },
 ]
 
-// 最近群聊邀请
-const groupInvites = ref([
+// 群聊邀请数据
+const groupInvites = ref([ // 群聊邀请列表
   { inviter: 'Micheal John', group: 'Vue Devs', date: '18-10-2021', status: 'Accepted', avatar: 'https://placehold.co/600x400/png' },
   { inviter: 'Ryan Doe', group: 'Frontend Masters', date: '01-06-2022', status: 'Pending', avatar: 'https://placehold.co/600x400/png' },
   { inviter: 'Tarry White', group: 'Design Team', date: '14-10-2021', status: 'Declined', avatar: 'https://placehold.co/600x400/png' },
@@ -264,18 +200,11 @@ const groupInvites = ref([
   { inviter: 'Chris Paul', group: 'React China', date: '10-09-2022', status: 'Accepted', avatar: 'https://placehold.co/600x400/png' },
   { inviter: 'Linda Green', group: 'Cloud Native', date: '15-10-2022', status: 'Pending', avatar: 'https://placehold.co/600x400/png' },
 ])
-const groupInvitePage = ref(1)
-const groupInvitePageSize = 5
-const pagedGroupInvites = computed(() => {
-  const start = (groupInvitePage.value - 1) * groupInvitePageSize
-  return groupInvites.value.slice(start, start + groupInvitePageSize)
-})
-function handleGroupInvitePageChange(val) {
-  groupInvitePage.value = val
-}
+const groupInvitePage = ref(1) // 群聊邀请当前页
+const groupInvitePageSize = 5 // 群聊邀请每页数量
 
 // 系统消息
-const sysMessages = [
+const sysMessages = [ // 系统消息列表
   { text: 'Platform v2.0 Major Update Released', type: 'major' },
   { text: 'Added new notification center', type: 'minor' },
   { text: 'Fixed group invite bug', type: 'bugfix' },
@@ -283,31 +212,9 @@ const sysMessages = [
   { text: 'Improved performance', type: 'minor' },
   { text: 'Fixed login issue', type: 'bugfix' },
 ]
-function getSysMsgIcon(type) {
-  if (type === 'major') return UpdateMajorIcon
-  if (type === 'minor') return UpdateMinorIcon
-  if (type === 'bugfix') return BugFixIcon
-  return null
-}
 
-
-// 留言板块逻辑
-const leaveInput = ref('')
-const leaveMessages = ref([])
-function handleLeaveSubmit() {
-  if (leaveInput.value.trim()) {
-    leaveMessages.value.unshift(leaveInput.value.trim())
-    leaveInput.value = ''
-  }
-}
-
-function selectEmoji(type) {
-  if (type === 'smile') leaveInput.value += '😊'
-  if (type === 'sad') leaveInput.value += '😞'
-}
-
-// More Services 区块模拟数据
-const gridItems = [
+// 服务网格
+const gridItems = [ // 服务网格项目列表
   {
     title: '网站资源',
     desc: '查看实用网站、工具资源汇总',
@@ -329,6 +236,39 @@ const gridItems = [
     icon: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Design Icons by Pictogrammers - https://github.com/Templarian/MaterialDesign/blob/master/LICENSE --><path fill="currentColor" d="M9 22c-.55 0-1-.45-1-1v-3H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12c0 1.11-.89 2-2 2h-6.1l-3.7 3.71c-.2.19-.45.29-.7.29zm1-6v3.08L13.08 16H20V4H4v12zm5.84-7.8l-1.01 1.01l-2.07-2.03l1.01-1.02c.2-.21.54-.22.78 0l1.29 1.25c.21.21.22.55 0 .79M8 11.91l4.17-4.19l2.07 2.08l-4.16 4.2H8z"/></svg>`
   },
 ]
+// #endregion
+
+// #region 计算属性
+/**
+ * 分页后的群聊邀请列表
+ */
+const pagedGroupInvites = computed(() => {
+  const start = (groupInvitePage.value - 1) * groupInvitePageSize
+  return groupInvites.value.slice(start, start + groupInvitePageSize)
+})
+// #endregion
+
+// #region 功能函数
+/**
+ * 处理群聊邀请分页变化
+ * @param {number} val - 新的页码
+ */
+function handleGroupInvitePageChange(val) {
+  groupInvitePage.value = val
+}
+
+/**
+ * 根据消息类型获取对应图标组件
+ * @param {string} type - 消息类型: major/minor/bugfix
+ * @returns {Component} 图标组件
+ */
+function getSysMsgIcon(type) {
+  if (type === 'major') return UpdateMajorIcon
+  if (type === 'minor') return UpdateMinorIcon
+  if (type === 'bugfix') return BugFixIcon
+  return null
+}
+// #endregion
 </script>
 
 <style scoped>
@@ -368,11 +308,13 @@ const gridItems = [
   margin-bottom: 0;
   background: linear-gradient(90deg, #2253a7 0%, #409eff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .dark-mode .notice-title-pc {
   background: linear-gradient(90deg, #eaf6ff 0%, #90c4ff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .notice-tabs-pc {
@@ -581,11 +523,13 @@ const gridItems = [
   letter-spacing: 0.5px;
   background: linear-gradient(90deg, #2253a7 0%, #409eff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .dark-mode .notice-grid-title-pc {
   background: linear-gradient(90deg, #eaf6ff 0%, #90c4ff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .notice-grid-pc {
@@ -666,6 +610,7 @@ const gridItems = [
   background: none;
   box-shadow: none;
   border-radius: 0;
+  color:rgb(116, 152, 253);
 }
 .notice-grid-card-pc-standalone {
   display: flex;
@@ -696,6 +641,7 @@ const gridItems = [
   letter-spacing: 0.5px;
   background: linear-gradient(90deg, #2253a7 0%, #409eff 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .notice-leave-form {
@@ -740,209 +686,6 @@ const gridItems = [
   font-size: 13px;
   padding: 8px 0;
 }
-.notice-leave-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10%;
-  padding: 0 36px 18px 36px;
-  box-sizing: border-box;
-}
-.notice-card-demo {
-  background: linear-gradient(135deg, #e8eff7cc 0%, #dbeafecc 100%);
-  border-radius: 16px;
-  box-shadow: 0 4px 18px 0 rgba(31, 38, 135, 0.10);
-  padding: 28px 24px 24px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-height: 320px;
-  max-width: 340px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,0.25);
-}
-.dark-mode .notice-card-demo {
-  background: #23263a;
-  box-shadow: 0 20px 20px 0 #00000033 inset !important;
-  border: none !important;
-}
-.notice-card-demo-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #29497a;
-  margin-bottom: 14px;
-}
-.dark-mode .notice-card-demo-title {
-  color: #fcfaf8;
-}
-.notice-card-demo-desc {
-  font-size: 1.08rem;
-  color: #374151;
-  margin-bottom: 32px;
-  line-height: 1.6;
-}
-.notice-card-demo-link {
-  margin-top: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  padding: 8px;
-  transition: background 0.18s;
-  text-decoration: none;
-}
-.notice-card-demo-link:hover {
-  background: #d1d5db;
-}
-.notice-leave-message-section-row {
-  flex: 1 1 0%;
-  box-shadow: none;
-  border-radius: 0;
-}
-.feedback-card {
-  background: linear-gradient(135deg, #f6fafd 0%, #e9f0fa 100%);
-  border-radius: 18px;
-  box-shadow: 0 4px 18px 0 rgba(31, 38, 135, 0.10);
-  padding: 38px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-.dark-mode .feedback-card {
-  background: #23263a;
-  box-shadow: 0 20px 20px 0 #00000033 inset !important;
-  border: none !important;
-}
-.feedback-title {
-  font-size: 1.55rem;
-  font-weight: 700;
-  color: #29497a;
-  text-align: center;
-  margin-bottom: 16px;
-  letter-spacing: 1px;
-  opacity: 0.95;
-}
-.dark-mode .feedback-title {
-  color: #fafbff;
-}
-.feedback-input-area {
-  width: 100%;
-  margin-bottom: 14px;
-}
-
-.feedback-textarea {
-  width: 100%;
-  min-height: 80px;
-  border-radius: 10px;
-  border: 0;
-  background: #f3f7fb;
-  font-size: 1.18rem;
-  color: #374151;
-  padding: 12px 14px;
-  resize: none;
-  outline: none;
-  transition: border 0.18s;
-  box-sizing: border-box;
-  box-shadow: 0 2px 8px 0 #e0e7ef inset;
-}
-.dark-mode .feedback-textarea {
-  background: #23263a;
-  box-shadow: 0 2px 8px 0 #00000033 inset !important;
-  color: #fff;
-}
-
-
-.feedback-actions {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 6px;
-}
-.feedback-emojis {
-  display: flex;
-  gap: 8px;
-}
-.feedback-emoji-btn {
-  background: #f3f7fb;
-  border: none;
-  border-radius: 8px;
-  width: 38px;
-  height: 38px;
-  font-size: 1.35rem;
-  cursor: pointer;
-  transition: background 0.18s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.feedback-emoji-btn:hover {
-  background: #e0e7ef;
-}
-.feedback-send-btn {
-  background: #f3f7fb;
-  border: none;
-  border-radius: 10px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.18s;
-  font-size: 1.3rem;
-}
-.feedback-send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.feedback-send-btn:hover:not(:disabled) {
-  background: #e0e7ef;
-}
-
-/* 社交玻璃片样式 */
-.social-glass-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 22px;
-  margin-bottom: 18px;
-  justify-items: center;
-  align-items: center;
-}
-@media (max-width: 900px) {
-  .social-glass-row {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 600px) {
-  .social-glass-row {
-    grid-template-columns: 1fr;
-  }
-}
-.social-glass-btn {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.28);
-  box-shadow: 0 2px 12px 0 #1f268714;
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1.5px solid rgba(180,200,255,0.13);
-  transition: box-shadow 0.18s, background 0.18s, transform 0.18s;
-  cursor: pointer;
-}
-.social-glass-btn:hover {
-  background: rgba(255,255,255,0.45);
-  box-shadow: 0 4px 18px 0 #1f26872a;
-  transform: translateY(-2px) scale(1.06);
-}
-
 .dashboard-section {
   margin: 40px auto 0 auto;
   max-width: 1300px;
@@ -1179,19 +922,6 @@ const gridItems = [
   .dashboard-group-invites, .dashboard-sysmsgs {
     padding: 12px;
   }
-  .notice-leave-row {
-    flex-direction: column;
-    gap: 18px;
-    padding: 0 8px 12px 8px;
-  }
-  .notice-card-demo {
-    max-width: 100%;
-    min-width: 0;
-    width: 100%;
-  }
-  .feedback-card {
-    padding: 18px;
-  }
   .notice-grid-section-pc-standalone {
     padding: 12px;
   }
@@ -1216,20 +946,6 @@ const gridItems = [
   }
   .dashboard-section {
     padding: 0 0 8px 0;
-  }
-  .notice-leave-row {
-    flex-direction: column;
-    gap: 10px;
-    padding: 0 4px 8px 4px;
-  }
-  .notice-card-demo {
-    padding: 12px 8px 12px 8px;
-    max-width: 100%;
-    min-width: 0;
-    width: 100%;
-  }
-  .feedback-card {
-    padding: 8px;
   }
   .notice-grid-section-pc-standalone {
     padding: 4px;
@@ -1295,5 +1011,7 @@ const gridItems = [
 }
 
 </style>
+
+
 
 

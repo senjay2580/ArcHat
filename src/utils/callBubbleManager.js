@@ -4,7 +4,7 @@
  */
 
 import { createApp } from 'vue'
-import VoiceCallBubble from '@/components/VoiceCallBubble.vue'
+import VoiceCallBubble from '@/components/call/VoiceCallBubble.vue'
 import { useCallStore } from '@/stores/call.js'
 
 class CallBubbleManager {

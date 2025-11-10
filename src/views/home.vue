@@ -44,7 +44,7 @@
       <!-- #region 会话列表 -->
       <el-aside :class="['sidebar', { collapsed: isSidebarCollapse }]">
         <div class="sidebar-header" v-if="!isSidebarCollapse">
-          <h2 class="inbox-title"> <a href=""><img src="/src/assets/image/archat.png" alt="" width="50px"></a>ArcHat
+          <h2 class="inbox-title"> <a @click="router.push('/chat')" style="cursor: pointer;"><img src="/src/assets/image/archat.png" alt="" width="50px"></a>ArcHat
           </h2>
           <div class="visitor-tag"><el-icon>
               <UserFilled />
@@ -223,44 +223,6 @@
             <path d="M256 48C141.125 48 48 141.125 48 256s93.125 208 208 208 208-93.125 208-208S370.875 48 256 48zm0 272l-96-96h192l-96 96z" fill="currentColor"/>
           </svg>
         </el-button>
-        <el-dropdown trigger="click">
-          <el-button circle class="apple-menu-btn">
-            <div class="apple-dots">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="handleShowSearchDialog('friend')">
-                <DangerButton type="gradient-purple" style="margin-top:12px;" >
-                  <el-icon>
-                  <User />
-                </el-icon>
-                添加好友
-              </DangerButton>
-               
-              </el-dropdown-item>
-              <el-dropdown-item @click="handleShowSearchDialog('group')">
-                <DangerButton type="gradient-green" style="margin-top:12px;" >
-                  <el-icon>
-                  <UserFilled />
-                </el-icon>
-                添加群聊
-              </DangerButton>
-              </el-dropdown-item>
-              <el-dropdown-item @click="handleShowCreateGroupDialog">
-                <DangerButton type="gradient-orange" style="margin-top:12px;" >
-                  <el-icon>
-                  <Plus />
-                </el-icon>
-                创建群聊
-              </DangerButton>
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
 
         <DayNightSwitch v-model="isDarkMode" data-tooltip="切换主题" />
 
@@ -407,71 +369,49 @@
 <script setup>
 // #region 导入依赖
 import { ref, onMounted, onUnmounted, watch, computed, h, defineComponent } from 'vue';
-import {
-  ChatDotRound, Setting, Sunny, Moon,
-  ArrowLeft, Plus, User, UserFilled, Message, Bell,
-  Close, Minus, FullScreen, Search, Position,
-  Calendar, Folder
-} from '@element-plus/icons-vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import FullScreenDialog from '@/components/FullScreenDialog.vue';
-import SearchDialog from '@/components/SearchDialog.vue';
+import { ElMessage, ElMessageBox, ElInfiniteScroll } from 'element-plus';
+import { ChatDotRound, Setting, Sunny, Moon, ArrowLeft, Plus, User, UserFilled, Message, Bell, Close, Minus, FullScreen, Search, Position, Calendar, Folder } from '@element-plus/icons-vue';
+
+import FullScreenDialog from '@/components/layout/FullScreenDialog.vue';
+import SearchDialog from '@/components/business/SearchDialog.vue';
+import MessageNotification from '@/components/feedback/MessageNotification.vue';
+import SignInCalendar from '@/components/business/SignInCalendar.vue';
+import ExpDialog from '@/components/feedback/ExpDialog.vue';
+import DangerButton from '@/components/form/DangerButton.vue';
+import WorningTips from '@/components/feedback/WorningTips.vue';
+import DayNightSwitch from '@/components/interaction/DayNightSwitch.vue';
+import DropdownGridBox from '@/components/interaction/DropdownGridBox.vue';
+
 import { getFriendList } from '@/api/friend';
 import { getContactList, getGroupList, getUnreadMsgCnt } from '@/api/contact';
-import '@/assets/styles/home.css';
 import { logoutService } from '@/api/user';
-import { useUserInfoStore } from '@/stores/user';
-import { formatMessageTime } from '@/utils/time';
-import { useContactStore } from '@/stores/contact';
 import { getMessageById } from '@/api/chatService';
-import emitter from '@/utils/eventBus';
-import MessageNotification from '@/components/MessageNotification.vue';
-import SignInCalendar from '@/components/SignInCalendar.vue';
-import ExpDialog from '@/components/ExpDialog.vue';
-import { ElInfiniteScroll } from 'element-plus';
 import { addGroupRoom } from '@/api/room';
-import { handleSignIn, getSignInDetail, getSignedDates, checkTodaySignIn, getConsecutiveSignInDays, getTotalSignInDays } from '@/utils/signInHandler';
 import { fetchVisitorCount, callAddVisitorOncePerDay } from '@/api/uv';
-import DangerButton from '@/components/dangerButton.vue';
+
+import { useUserInfoStore } from '@/stores/user';
+import { useContactStore } from '@/stores/contact';
+
+import { formatMessageTime } from '@/utils/time';
+import { handleSignIn, getSignInDetail, getSignedDates, checkTodaySignIn, getConsecutiveSignInDays, getTotalSignInDays } from '@/utils/signInHandler';
 import { uploadImageFile } from '@/utils/fileHandler';
 import { loadMoreList } from '@/utils/paginatedListLoader';
-import WorningTips from '@/components/WorningTips.vue';
-import DayNightSwitch from '@/components/DayNightSwitch.vue';
-import DropdownGridBox from '@/components/DropdownGridBox.vue';
-const groupAvatarFile = ref(null);
-const groupAvatarPreview = ref('');
-const groupAvatarInput = ref(null);
-
-function handleGroupAvatarChange(e) {
-  const file = e.target.files[0];
-  if (file) {
-    groupAvatarFile.value = file;
-    groupAvatarPreview.value = URL.createObjectURL(file);
-  }
-}
-function handleGroupAvatarDrop(e) {
-  e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if (file) {
-    groupAvatarFile.value = file;
-    groupAvatarPreview.value = URL.createObjectURL(file);
-  }
-}
-function handleGroupAvatarRemove() {
-  groupAvatarFile.value = null;
-  groupAvatarPreview.value = '';
-}
+import emitter from '@/utils/eventBus';
+import '@/assets/styles/home.css';
 // #endregion 
 
 // #region 初始化Store和用户信息
 const userInfoStore = useUserInfoStore()
 const contactStore = useContactStore();
 const userInfo = computed(() => userInfoStore.userInfo);
+
+const groupAvatarFile = ref(null);
+const groupAvatarPreview = ref('');
+const groupAvatarInput = ref(null);
 // #endregion
 
 // #region 菜单配置
-// 菜单配置
 const MENU_CONFIG = {
   chat: {
     icon: 'chat',
@@ -507,7 +447,7 @@ const PATH_TO_ICON = Object.entries(MENU_CONFIG).reduce((acc, [key, value]) => {
 }, {});
 // #endregion
 
-// #region 路由和基础状态
+// #region 数据存储
 const router = useRouter();
 const route = useRoute();
 const isDarkMode = ref(true);
@@ -570,90 +510,119 @@ const cancelHideDropdown = () => {
 // 下拉网格项目配置 - 使用 sections 结构
 const dropdownSections = ref([
   {
-    title: '元素',
+    title: '聊天功能',
     items: [
       { 
-        name: 'All', 
-        icon: 'Grid3X3', 
+        name: '添加好友', 
+        icon: 'User', 
         action: () => {
-          ElMessage.info('查看所有元素');
+          handleShowSearchDialog('friend');
           isDropDownVisible.value = false;
         }
       },
       { 
-        name: 'Buttons', 
-        icon: 'MousePointer2', 
+        name: '添加群聊', 
+        icon: 'Users', 
         action: () => {
-          ElMessage.success('查看按钮组件');
+          handleShowSearchDialog('group');
           isDropDownVisible.value = false;
         }
       },
       { 
-        name: 'Checkboxes', 
-        icon: 'CheckSquare', 
+        name: '创建群聊', 
+        icon: 'Plus', 
         action: () => {
-          ElMessage.info('查看复选框组件');
-          isDropDownVisible.value = false;
-        }
-      },
-      { 
-        name: 'Toggle switches', 
-        icon: 'ToggleLeft', 
-        action: () => {
-          ElMessage.info('查看开关组件');
-          isDropDownVisible.value = false;
-        }
-      },
-      { 
-        name: 'Toggle switches', 
-        icon: 'ToggleLeft', 
-        action: () => {
-          ElMessage.info('查看开关组件');
-          isDropDownVisible.value = false;
-        }
-      },
-      { 
-        name: 'Toggle switches', 
-        icon: 'ToggleLeft', 
-        action: () => {
-          ElMessage.info('查看开关组件');
+          handleShowCreateGroupDialog();
           isDropDownVisible.value = false;
         }
       }
     ]
   },
   {
-    title: '挑战',
+    title: 'AI功能',
     items: [
       { 
-        name: 'Cards', 
-        icon: 'CreditCard', 
+        name: 'AI助手', 
+        icon: 'User', 
         action: () => {
-          ElMessage.success('查看卡片组件');
+          ElMessage.info('启动AI助手');
           isDropDownVisible.value = false;
         }
       },
       { 
-        name: 'Loaders', 
-        icon: 'Loader2', 
-        action: () => {
-          ElMessage.info('查看加载组件');
-          isDropDownVisible.value = false;
-        }
-      },
-      { 
-        name: 'Inputs', 
+        name: '智能翻译', 
         icon: 'Type', 
         action: () => {
-          ElMessage.info('查看输入框组件');
+          ElMessage.success('开启智能翻译');
           isDropDownVisible.value = false;
         }
       },
       { 
-        name: 'Radio buttons', 
+        name: '语音识别', 
         icon: 'Circle', 
         action: () => {
-          ElMessage.info('查看单选按钮组件');
+          ElMessage.info('启动语音识别');
+          isDropDownVisible.value = false;
+        }
+      },
+      { 
+        name: '智能摘要', 
+        icon: 'CheckSquare', 
+        action: () => {
+          ElMessage.info('生成智能摘要');
+          isDropDownVisible.value = false;
+        }
+      }
+    ]
+  },
+  {
+    title: '更多功能',
+    items: [
+      { 
+        name: '文件传输', 
+        icon: 'CreditCard', 
+        action: () => {
+          ElMessage.success('打开文件传输');
+          isDropDownVisible.value = false;
+        }
+      },
+      { 
+        name: '屏幕共享', 
+        icon: 'Grid3X3', 
+        action: () => {
+          ElMessage.info('启动屏幕共享');
+          isDropDownVisible.value = false;
+        }
+      },
+      { 
+        name: '视频通话', 
+        icon: 'MousePointer2', 
+        action: () => {
+          ElMessage.info('发起视频通话');
+          isDropDownVisible.value = false;
+        }
+      },
+      { 
+        name: '消息加密', 
+        icon: 'ToggleLeft', 
+        action: () => {
+          ElMessage.info('开启消息加密');
+          isDropDownVisible.value = false;
+        }
+      },
+      { 
+        name: '直播间', 
+        icon: 'Video', 
+        action: () => {
+          ElMessage.success('进入直播间');
+          isDropDownVisible.value = false;
+        }
+      },
+      { 
+        name: '文档协作', 
+        icon: 'FileText', 
+        action: () => {
+          ElMessage.info('打开文档协作');
           isDropDownVisible.value = false;
         }
       }
@@ -663,23 +632,68 @@ const dropdownSections = ref([
 
 // 监听侧边栏状态变化
 watch(isSidebarCollapse, (newVal) => {
-  // 发出侧边栏状态变化事件
   emitter.emit('sidebar-toggle', newVal);
 });
-const searchQuery = ref('');
-const currentView = ref('friends');
-// #endregion
 
-// #region 数据状态管理
-const friendList = ref([]);
-const groupList = ref([]);
-const contactList = ref([]);
-const contactQuery = ref({
+// 搜索和视图
+const searchQuery = ref(''); // 搜索关键词
+const currentView = ref('friends'); // 当前视图: friends/groups
+
+// 列表数据
+const friendList = ref([]); // 好友列表
+const groupList = ref([]); // 群聊列表
+const contactList = ref([]); // 联系人列表（统一）
+const contactQuery = ref({ // 联系人查询参数
   page: 1,
   pageSize: 10
 });
 
-const activeIcon = ref('chat');
+// 导航状态
+const activeIcon = ref('chat'); // 当前激活的导航图标
+
+// 加载状态
+const isLoading = ref(false); // 数据加载中
+const isFriendListLoaded = ref(false); // 好友列表是否已加载
+const noMoreData = ref(false); // 是否没有更多数据
+
+// 消息预览
+const messagePreviews = ref(new Map()); // 消息预览缓存（contactId -> preview）
+const messageSenders = ref(new Map()); // 消息发送者缓存（contactId -> sender）
+// #endregion
+
+// #region 工具函数
+/**
+ * 处理群聊头像文件选择
+ */
+function handleGroupAvatarChange(e) {
+  const file = e.target.files[0];
+  if (file) {
+    groupAvatarFile.value = file;
+    groupAvatarPreview.value = URL.createObjectURL(file);
+  }
+}
+
+/**
+ * 处理群聊头像拖拽上传
+ */
+function handleGroupAvatarDrop(e) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    groupAvatarFile.value = file;
+    groupAvatarPreview.value = URL.createObjectURL(file);
+  }
+}
+
+/**
+ * 移除群聊头像预览
+ */
+function handleGroupAvatarRemove() {
+  groupAvatarFile.value = null;
+  groupAvatarPreview.value = '';
+}
+
+
 // #endregion
 
 // #region 路由和菜单处理
@@ -704,14 +718,6 @@ watch(() => route.path, () => {
 });
 // #endregion
 
-// #region 加载状态管理
-// 添加加载状态
-const isLoading = ref(false);
-const isFriendListLoaded = ref(false);
-const noMoreData = ref(false);
-
-// #endregion
-
 // #region 好友列表管理
 // 获取好友列表
 const fetchFriendList = async () => {
@@ -724,7 +730,7 @@ const fetchFriendList = async () => {
         avatar: item.avatar || '',
         status: item.status,
         createTime: item.createTime,
-        exep: item.exep
+        exp: item.exp
       }));
       friendList.value = friends;
       isFriendListLoaded.value = true;
@@ -739,16 +745,9 @@ const fetchFriendList = async () => {
 // #endregion
 
 // #region 联系人列表管理
-// 工具函数：将未读数拼接到联系人
-function mergeUnreadCount(contacts, unreadList) {
-  const unreadMap = new Map(unreadList.map(item => [item.contactId, item.count]));
-  return contacts.map(contact => ({
-    ...contact,
-    unreadCount: unreadMap.get(contact.contactId) || 0
-  }));
-}
-
-// 无限滚动加载更多
+/**
+ * 无限滚动加载更多好友联系人
+ */
 const loadMoreFriends = () => {
   if (connectionStatus.value !== 'connected') return;
   loadMoreList({
@@ -798,7 +797,7 @@ const fetchContactList = async () => {
           avatar: friendInfo.avatar || '',
           status: friendInfo.status || false,
           createTime: friendInfo.createTime,
-          exep: friendInfo.exep,
+          exp: friendInfo.exp,
           unreadCount: unreadMap[contact.id] || 0
         };
       });
@@ -833,14 +832,10 @@ const friendMap = computed(() => {
       avatar: friend.avatar,
       status: friend.status,
       createTime: friend.createTime,
-      exep: friend.exep
+      exp: friend.exp
     }
   ]));
 });
-
-// 在 script setup 中添加
-const messagePreviews = ref(new Map());
-const messageSenders = ref(new Map()); // 新增: 消息发送者id映射
 
 // 获取最新消息内容和发送者
 const getLatestMessage = async (contact) => {
@@ -1467,7 +1462,15 @@ const updateSpecificGroupMessage = async (roomId) => {
     });
     
     if (unreadRes.code === 200) {
-    
+      // 处理未读数量数据
+      const unreadCount = unreadRes.data?.records?.find(record => 
+        String(record.contactId) === String(roomId)
+      )?.unreadCount || 0;
+      
+      // 更新群聊的未读数量
+      if (groupList.value[groupIndex]) {
+        groupList.value[groupIndex].unreadCount = unreadCount;
+      }
       
       // 重新获取群聊列表来获取最新的lastMsgId（只获取少量数据进行对比）
       const groupRes = await getGroupList({ 
@@ -1525,8 +1528,8 @@ function getGroupSenderName(group) {
   }
   return '';
 }
-
 </script>
+
 
 
 <style scoped>
@@ -2445,3 +2448,5 @@ function getGroupSenderName(group) {
   background-color: transparent !important;
 }
 </style>
+
+

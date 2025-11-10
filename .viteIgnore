@@ -1,0 +1,13 @@
+# Vite构建忽略文件
+# 排除文档目录
+doc/
+docs/
+*.md
+# 排除开发相关文件
+.vscode/
+.idea/
+# 排除临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db

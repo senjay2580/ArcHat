@@ -3,6 +3,7 @@ import { ref } from 'vue';
 
 class ChatWebSocket {
   constructor({ url, token, onMessage, onOpen, onClose, onError }) {
+    console.log('[WS-DEBUG] ChatWebSocket constructor called.');
     this.url = url;
     this.token = token;
     this.onMessage = onMessage;
@@ -18,53 +19,113 @@ class ChatWebSocket {
     this.lastHeartbeatResponse = Date.now();
     this.heartbeatTimeout = null;
     this.isConnecting = false;
-    this.connectionStatus = ref('disconnected'); // 'connecting', 'connected', 'disconnected'
-    this.healthCheckInterval = null; // 连接健康检查定时器
+    this.connectionStatus = ref('disconnected');
+    this.waitConnLoading = ref(false);
+    this.healthCheckInterval = null;
     
-    //#region 防止浏览器后台断开WebSocket连接
-    // 页面可见性相关 - 防止后台断开
+    // 防止浏览器后台断开WebSocket连接
     this.isPageVisible = !document.hidden;
+    console.log(`[WS-DEBUG] Initial visibility state: ${this.isPageVisible ? 'visible' : 'hidden'}`);
     this.backgroundHeartbeatInterval = null;
-    this.visibilityChangeHandler = null;
-    //#endregion
+    this.visibilityChangeHandler = this.handleVisibilityChange.bind(this);
+    this.backgroundStartTime = null;
+    this.lastConnectionTime = null;
+    this.visibilityChangeTimeout = null; // 防抖定时器
     
+    // Web Worker 心跳机制
+    this.heartbeatWorker = null;
+    this.workerHeartbeatActive = false;
+    this.initHeartbeatWorker();
+    
+    console.log('[WS-DEBUG] Initializing connection and visibility listeners.');
     this.connect();
-    //#region 防止浏览器后台断开WebSocket连接 - 初始化
     this.addVisibilityListeners();
-    //#endregion
   }
 
   connect() {
+    console.log(`[WS-DEBUG] connect() called. isLoggedOut: ${this.isLoggedOut}, isConnecting: ${this.isConnecting}`);
     if (this.isLoggedOut || this.isConnecting) {
-      console.log('用户已登出或正在连接中，跳过连接');
       return;
     }
     
+    // 清理旧连接
+    if (this.ws) {
+      this.ws.onopen = null;
+      this.ws.onmessage = null;
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+        this.ws.close();
+      }
+      this.ws = null;
+    }
+    
+    this.stopHeartbeat();
+    this.stopBackgroundHeartbeat();
+    this.stopHealthCheck();
     this.isConnecting = true;
-    this.connectionStatus.value = 'connecting';
+    
+    try {
+      this.connectionStatus.value = 'connecting';
+      this.waitConnLoading.value = true;
+    } catch (error) {
+      console.error('设置连接状态失败:', error);
+      this.connectionStatus = ref('connecting');
+      this.waitConnLoading = ref(true);
+    }
     
     try {
       const wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}`;
-      console.log('尝试连接 WebSocket:', wsUrl);
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = (event) => {
-        console.log('WebSocket 连接成功');
+        console.log('[WS-DEBUG] WebSocket connection opened successfully.');
+        const now = new Date();
+        this.lastConnectionTime = now;
         this.isConnecting = false;
-        this.connectionStatus.value = 'connected';
+        
+        try {
+          this.connectionStatus.value = 'connected';
+          this.waitConnLoading.value = false;
+        } catch (error) {
+          console.error('onopen: 设置连接状态失败:', error);
+          this.connectionStatus = ref('connected');
+          this.waitConnLoading = ref(false);
+        }
+        
         this.reconnectAttempts = 0;
         this.lastHeartbeatResponse = Date.now();
-        this.startHeartbeat();
-        this.startHealthCheck();
+        
+        setTimeout(() => {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN && !this.isLoggedOut) {
+            // 优先使用Worker心跳，如果不可用则使用传统心跳
+            if (this.heartbeatWorker) {
+              this.startWorkerHeartbeat(20000); // 20秒间隔
+            } else {
+              this.startHeartbeat();
+            }
+            setTimeout(() => {
+              if (this.ws && this.ws.readyState === WebSocket.OPEN && !this.isLoggedOut) {
+                this.startHealthCheck();
+              }
+            }, 5000);
+          }
+        }, 5000);
+        
         this.onOpen && this.onOpen(event);
-        // 触发连接成功事件，通知GroupChat关闭loading动画
-        emitter.emit('websocket:connected');
+        
+        setTimeout(() => {
+          if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            emitter.emit('websocket-connected');
+          }
+        }, 1000);
       };
 
       this.ws.onmessage = (event) => {
+        // console.log('[WS-DEBUG] Received message:', event.data);
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 2) { // 心跳响应
+          if (data.type === 2) {
             this.lastHeartbeatResponse = Date.now();
           }
           this.onMessage && this.onMessage(event);
@@ -74,43 +135,44 @@ class ChatWebSocket {
       };
 
       this.ws.onclose = (event) => {
-        console.log('WebSocket 连接关闭:', event.code, event.reason);
-        console.log('关闭详情:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean,
-          isLoggedOut: this.isLoggedOut,
-          timestamp: new Date().toISOString()
-        });
+        console.error(`[WS-DEBUG] WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}, WasClean: ${event.wasClean}`);
+        const now = new Date();
+        const connectionDuration = this.lastConnectionTime ? 
+          Math.round((now - this.lastConnectionTime) / 1000) : 'unknown';
+        
+        console.warn(`WebSocket 连接关闭: ${event.code} ${event.reason} - ${now.toLocaleTimeString()}`);
         this.isConnecting = false;
-        this.connectionStatus.value = 'disconnected';
+        
+        try {
+          this.connectionStatus.value = 'disconnected';
+          this.waitConnLoading.value = false;
+        } catch (error) {
+          console.error('onclose: 设置连接状态失败:', error);
+          this.connectionStatus = ref('disconnected');
+          this.waitConnLoading = ref(false);
+        }
+        
         this.stopHeartbeat();
+        this.stopBackgroundHeartbeat();
         this.stopHealthCheck();
         this.onClose && this.onClose(event);
         
-        // 只有在非正常关闭且未登出的情况下才重连
         if (!this.isLoggedOut && event.code !== 1000) {
-          console.log('准备重连...');
           this.reconnect();
         } else {
-          //  手动触发重连 显示重连弹窗
           emitter.emit('websocket-reconnect');
         }
       };
 
       this.ws.onerror = (event) => {
+        console.error('[WS-DEBUG] WebSocket error observed:', event);
         console.error('WebSocket 错误:', event);
-        console.error('错误详情:', {
-          type: event.type,
-          target: event.target,
-          readyState: event.target?.readyState
-        });
         this.isConnecting = false;
         this.connectionStatus.value = 'disconnected';
+        this.waitConnLoading.value = false;
         this.onError && this.onError(event);
       };
       
-      // 添加网络状态监听
       this.addNetworkListeners();
     } catch (error) {
       console.error('创建 WebSocket 连接失败:', error);
@@ -125,35 +187,33 @@ class ChatWebSocket {
 
   send(data) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log('[WS-DEBUG] Sending data:', JSON.stringify(data));
       this.ws.send(typeof data === 'string' ? data : JSON.stringify(data));
     } else {
       console.warn('WebSocket 未连接，无法发送消息');
     }
   }
 
-  // 开始连接健康检查
   startHealthCheck() {
     this.stopHealthCheck();
-    
     this.healthCheckInterval = setInterval(() => {
       if (this.isLoggedOut) {
         this.stopHealthCheck();
         return;
       }
       
-      // 检查WebSocket连接状态
-      if (this.ws && this.ws.readyState !== WebSocket.OPEN) {
-        console.log('检测到WebSocket连接异常，状态:', this.ws.readyState);
-        if (this.connectionStatus.value === 'connected') {
-          console.log('连接状态不一致，更新状态');
-          this.connectionStatus.value = 'disconnected';
-          this.onClose && this.onClose({ code: 1006, reason: '连接异常' });
+      if (this.ws && (this.ws.readyState === WebSocket.CLOSED || this.ws.readyState === WebSocket.CLOSING)) {
+        if (this.connectionStatus && this.connectionStatus.value === 'connected') {
+          try {
+            this.connectionStatus.value = 'disconnected';
+          } catch (error) {
+            console.error('更新连接状态失败:', error);
+          }
         }
       }
-    }, 30000); // 每30秒检查一次
+    }, 60000);
   }
 
-  // 停止连接健康检查
   stopHealthCheck() {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
@@ -161,13 +221,82 @@ class ChatWebSocket {
     }
   }
 
-  startHeartbeat() {
-    this.stopHeartbeat(); // 确保清理之前的定时器
+  initHeartbeatWorker() {
+    try {
+      this.heartbeatWorker = new Worker('/heartbeat-worker.js');
+      
+      this.heartbeatWorker.onmessage = (e) => {
+        const { type, timestamp } = e.data;
+        
+        switch(type) {
+          case 'WORKER_READY':
+            console.log('[WS-DEBUG] Heartbeat Worker ready');
+            break;
+          case 'HEARTBEAT_TICK':
+            // Worker发送心跳信号，我们在主线程发送WebSocket心跳
+            if (this.workerHeartbeatActive && this.ws && this.ws.readyState === WebSocket.OPEN) {
+              this.send({ type: 2 });
+            }
+            break;
+          case 'PONG':
+            console.log('[WS-DEBUG] Worker pong received');
+            break;
+        }
+      };
+      
+      this.heartbeatWorker.onerror = (error) => {
+        console.error('[WS-DEBUG] Heartbeat Worker error:', error);
+        // 如果Worker失败，回退到传统心跳
+        this.fallbackToTraditionalHeartbeat();
+      };
+    } catch (error) {
+      console.error('[WS-DEBUG] Failed to create Heartbeat Worker:', error);
+      this.fallbackToTraditionalHeartbeat();
+    }
+  }
+  
+  startWorkerHeartbeat(interval = 20000) {
+    console.log(`[WS-DEBUG] Starting Worker heartbeat (${interval/1000}s interval).`);
     
-    console.log('开始心跳包检测');
+    if (this.heartbeatWorker) {
+      this.workerHeartbeatActive = true;
+      this.heartbeatWorker.postMessage({ type: 'START_HEARTBEAT', interval });
+    } else {
+      this.fallbackToTraditionalHeartbeat();
+    }
+  }
+  
+  stopWorkerHeartbeat() {
+    console.log('[WS-DEBUG] Stopping Worker heartbeat.');
+    
+    this.workerHeartbeatActive = false;
+    if (this.heartbeatWorker) {
+      this.heartbeatWorker.postMessage({ type: 'STOP_HEARTBEAT' });
+    }
+  }
+  
+  fallbackToTraditionalHeartbeat() {
+    console.log('[WS-DEBUG] Falling back to traditional heartbeat.');
+    this.startHeartbeat();
+  }
+
+  startHeartbeat() {
+    console.log('[WS-DEBUG] Starting traditional heartbeat (20s interval).');
+    this.stopHeartbeat();
+    this.stopBackgroundHeartbeat(); // 确保停止后台心跳
+    
     this.heartbeatInterval = setInterval(() => {
-      if (this.isLoggedOut || this.connectionStatus.value !== 'connected') {
-        console.log('停止心跳包：用户已登出或连接已断开');
+      if (this.isLoggedOut) {
+        this.stopHeartbeat();
+        return;
+      }
+      
+      if (!this.connectionStatus || this.connectionStatus.value !== 'connected') {
+        this.stopHeartbeat();
+        return;
+      }
+      
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
         this.stopHeartbeat();
         return;
       }
@@ -175,18 +304,16 @@ class ChatWebSocket {
       const now = Date.now();
       const timeSinceLastResponse = now - this.lastHeartbeatResponse;
       
-      console.log(`心跳包检测 - 距离上次响应: ${timeSinceLastResponse}ms, 当前时间: ${now}, 上次响应时间: ${this.lastHeartbeatResponse}`);
-      
-      // 只有在真正长时间没有心跳响应时才断开连接
-      if (timeSinceLastResponse > 120000) { // 增加到2分钟超时，给网络更多缓冲
-        console.log('心跳超时（2分钟无响应），重新连接...');
-        this.ws.close();
+      if (timeSinceLastResponse > 180000) {
+        console.warn('心跳超时（3分钟无响应），关闭连接');
+        this.ws.close(1001, '心跳超时');
         return;
       }
-
-      console.log('发送心跳包');
-      this.send({ type: 2 });
-    }, 15000); // 每15秒发送一次心跳，确保后端能及时收到
+      
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.send({ type: 2 });
+      }
+    }, 20000); // 20秒间隔，传统备用心跳
   }
 
   stopHeartbeat() {
@@ -200,54 +327,187 @@ class ChatWebSocket {
     }
   }
 
+  startBackgroundHeartbeat() {
+    console.log('[WS-DEBUG] Starting aggressive background heartbeat (5s interval).');
+    this.stopBackgroundHeartbeat();
+    this.stopHeartbeat(); // 确保停止前台心跳
+    
+    // 立即发送第一个后台心跳包
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.send({ type: 2 });
+    }
+    
+    this.backgroundHeartbeatInterval = setInterval(() => {
+      if (this.isLoggedOut) {
+        this.stopBackgroundHeartbeat();
+        return;
+      }
+      
+      if (this.isPageVisible) {
+        this.stopBackgroundHeartbeat();
+        return;
+      }
+      
+      if (!this.connectionStatus || this.connectionStatus.value !== 'connected') {
+        this.stopBackgroundHeartbeat();
+        return;
+      }
+      
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.stopBackgroundHeartbeat();
+        return;
+      }
+
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.send({ type: 2 });
+      }
+    }, 5000); // 5秒间隔，超短心跳对抗浏览器后台节流
+  }
+
+  stopBackgroundHeartbeat() {
+    if (this.backgroundHeartbeatInterval) {
+      clearInterval(this.backgroundHeartbeatInterval);
+      this.backgroundHeartbeatInterval = null;
+    }
+  }
+
   reconnect() {
-    if (this.reconnectTimeout || this.isLoggedOut || this.isConnecting) return;
+    if (this.reconnectTimeout || this.isLoggedOut || this.isConnecting) {
+      return;
+    }
     
     this.reconnectAttempts++;
     console.log(`尝试重连 (${this.reconnectAttempts})...`);
     
-    // 使用更温和的重连策略
+    if (this.reconnectAttempts > 10) {
+      console.warn('重连次数过多，停止重连');
+      emitter.emit('websocket-reconnect');
+      return;
+    }
+    
     let delay;
     if (this.reconnectAttempts <= 3) {
-      delay = 2000; // 前3次重连，2秒间隔
+      delay = 3000;
     } else if (this.reconnectAttempts <= 6) {
-      delay = 5000; // 4-6次重连，5秒间隔
+      delay = 8000;
     } else {
-      delay = 10000; // 7次以后，10秒间隔
+      delay = 15000;
     }
     
     console.log(`将在 ${delay}ms 后重连`);
     
     this.reconnectTimeout = setTimeout(() => {
-      this.connect();
       this.reconnectTimeout = null;
+      this.connect();
     }, delay);
   }
 
-  // 手动重连方法
-  manualReconnect() {
-    console.log('手动重连 WebSocket');
-    this.reconnectAttempts = 0;
-    this.stopHeartbeat();
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
+  addVisibilityListeners() {
+    console.log('[WS-DEBUG] addVisibilityListeners called.');
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      window.removeEventListener('focus', this.visibilityChangeHandler);
+      window.removeEventListener('blur', this.visibilityChangeHandler);
     }
-    if (this.ws) {
-      this.ws.close();
+    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
+    window.addEventListener('focus', this.visibilityChangeHandler);
+    window.addEventListener('blur', this.visibilityChangeHandler);
+  }
+
+  removeVisibilityListeners() {
+    console.log('[WS-DEBUG] removeVisibilityListeners called.');
+    if (this.visibilityChangeHandler) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
+      window.removeEventListener('focus', this.visibilityChangeHandler);
+      window.removeEventListener('blur', this.visibilityChangeHandler);
     }
-    this.connect();
+  }
+
+  handleVisibilityChange() {
+    const isNowVisible = !document.hidden;
+    console.log(`[WS-DEBUG] Page visibility changed: ${isNowVisible ? 'visible' : 'hidden'}`);
+    
+    this.isPageVisible = isNowVisible;
+    
+    // 使用Worker心跳时，不需要区分前后台，因为Worker不受节流影响
+    if (!this.isPageVisible) {
+      this.backgroundStartTime = Date.now();
+      console.log('[WS-DEBUG] Page hidden - Worker heartbeat continues unaffected');
+    } else {
+      this.backgroundStartTime = null;
+      console.log('[WS-DEBUG] Page visible - checking connection status');
+      
+      if (!this.ws || this.ws.readyState === WebSocket.CLOSED) {
+        console.warn('页面返回前台，发现WebSocket已断开，立即重连');
+        this.reconnect();
+      }
+    }
+  }
+
+  addNetworkListeners() {
+    this.removeNetworkListeners();
+    
+    if (typeof window !== 'undefined' && 'navigator' in window) {
+      this.onlineHandler = () => {
+        console.log('网络已连接，检查WebSocket状态');
+        if (!this.isLoggedOut && (!this.connectionStatus || this.connectionStatus.value !== 'connected')) {
+          setTimeout(() => {
+            if (!this.isConnected()) {
+              console.log('网络恢复后尝试重连');
+              this.manualReconnect();
+            }
+          }, 1000);
+        }
+      };
+      
+      this.offlineHandler = () => {
+        console.log('网络已断开');
+        if (this.connectionStatus && typeof this.connectionStatus === 'object' && 'value' in this.connectionStatus) {
+          this.connectionStatus.value = 'disconnected';
+        }
+      };
+      
+      window.addEventListener('online', this.onlineHandler);
+      window.addEventListener('offline', this.offlineHandler);
+    }
+  }
+
+  removeNetworkListeners() {
+    if (typeof window !== 'undefined') {
+      if (this.onlineHandler) {
+        window.removeEventListener('online', this.onlineHandler);
+        this.onlineHandler = null;
+      }
+      if (this.offlineHandler) {
+        window.removeEventListener('offline', this.offlineHandler);
+        this.offlineHandler = null;
+      }
+    }
   }
 
   close() {
     this.isLoggedOut = true;
-    this.connectionStatus.value = 'disconnected';
+    
+    try {
+      this.connectionStatus.value = 'disconnected';
+    } catch (error) {
+      console.error('close: 设置连接状态失败:', error);
+      this.connectionStatus = ref('disconnected');
+    }
+    
     this.stopHeartbeat();
+    this.stopBackgroundHeartbeat();
+    this.stopWorkerHeartbeat();
     this.stopHealthCheck();
     this.removeNetworkListeners();
-    //#region 防止浏览器后台断开WebSocket连接 - 清理
-    this.removeVisibilityListeners(); // 清理页面可见性监听器
-    //#endregion
+    this.removeVisibilityListeners();
+    
+    // 清理Worker
+    if (this.heartbeatWorker) {
+      this.heartbeatWorker.terminate();
+      this.heartbeatWorker = null;
+    }
+    
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -258,128 +518,48 @@ class ChatWebSocket {
     }
   }
 
-  // 获取连接状态
+  logout() {
+    console.log('用户登出，关闭WebSocket连接');
+    console.log('[WS-DEBUG] User logout initiated.');
+    this.close();
+  }
+
+  manualReconnect() {
+    console.log('手动重连 WebSocket');
+    if (this.isConnecting) {
+      console.log('正在连接中，请勿重复点击');
+      return;
+    }
+    this.reconnectAttempts = 0;
+    this.stopHeartbeat();
+    this.stopBackgroundHeartbeat();
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+      this.reconnectTimeout = null;
+    }
+    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+      this.ws.close();
+    }
+    
+    try {
+      this.connectionStatus.value = 'disconnected';
+      this.waitConnLoading.value = true;
+    } catch (error) {
+      console.error('重置连接状态失败:', error);
+      this.connectionStatus = ref('disconnected');
+      this.waitConnLoading = ref(true);
+    }
+    
+    this.connect();
+  }
+
   getConnectionStatus() {
     return this.connectionStatus.value;
   }
 
-  // 检查是否连接
   isConnected() {
     return this.ws && this.ws.readyState === WebSocket.OPEN;
   }
-
-  // 添加网络状态监听
-  addNetworkListeners() {
-    // 监听网络状态变化
-    if (typeof window !== 'undefined' && 'navigator' in window) {
-      window.addEventListener('online', () => {
-        console.log('网络已连接，尝试重连 WebSocket');
-        if (!this.isLoggedOut && this.connectionStatus.value !== 'connected') {
-          this.manualReconnect();
-        }
-      });
-      
-      window.addEventListener('offline', () => {
-        console.log('网络已断开');
-        this.connectionStatus.value = 'disconnected';
-      });
-    }
-  }
-
-  // 移除网络状态监听
-  removeNetworkListeners() {
-    if (typeof window !== 'undefined') {
-      window.removeEventListener('online', this.manualReconnect);
-      window.removeEventListener('offline', () => {
-        this.connectionStatus.value = 'disconnected';
-      });
-    }
-  }
-
-  //#region 防止浏览器后台断开WebSocket连接 - 方法实现
-  // 添加页面可见性监听 - 防止后台断开
-  addVisibilityListeners() {
-    if (typeof document === 'undefined') return;
-    
-    this.visibilityChangeHandler = () => {
-      this.isPageVisible = !document.hidden;
-      
-      if (this.isPageVisible) {
-        console.log('页面变为可见，恢复正常心跳');
-        // 页面变为可见时，停止后台心跳，恢复正常心跳
-        this.stopBackgroundHeartbeat();
-        if (this.connectionStatus.value === 'connected') {
-          this.startHeartbeat();
-        }
-        // 检查连接状态，如果断开则重连
-        if (!this.isConnected() && !this.isLoggedOut) {
-          console.log('页面恢复可见时发现连接断开，尝试重连');
-          this.manualReconnect();
-        }
-      } else {
-        console.log('页面变为后台，启动后台心跳保持连接');
-        // 页面变为后台时，使用更频繁的心跳保持连接
-        this.startBackgroundHeartbeat();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', this.visibilityChangeHandler);
-    
-    // 监听页面焦点变化作为补充
-    window.addEventListener('focus', () => {
-      if (!this.isPageVisible) {
-        this.isPageVisible = true;
-        this.visibilityChangeHandler();
-      }
-    });
-    
-    window.addEventListener('blur', () => {
-      // blur事件可能比visibilitychange更早触发，这里做一个延迟检查
-      setTimeout(() => {
-        if (document.hidden && this.isPageVisible) {
-          this.isPageVisible = false;
-          this.visibilityChangeHandler();
-        }
-      }, 100);
-    });
-  }
-
-  // 移除页面可见性监听
-  removeVisibilityListeners() {
-    if (typeof document !== 'undefined' && this.visibilityChangeHandler) {
-      document.removeEventListener('visibilitychange', this.visibilityChangeHandler);
-      this.visibilityChangeHandler = null;
-    }
-    this.stopBackgroundHeartbeat();
-  }
-
-  // 启动后台心跳 - 更频繁的心跳保持连接
-  startBackgroundHeartbeat() {
-    this.stopBackgroundHeartbeat();
-    this.stopHeartbeat(); // 停止正常心跳
-    
-    console.log('启动后台心跳保持连接');
-    this.backgroundHeartbeatInterval = setInterval(() => {
-      if (this.isLoggedOut || this.connectionStatus.value !== 'connected') {
-        this.stopBackgroundHeartbeat();
-        return;
-      }
-      
-      // 后台时使用更短的心跳间隔
-      console.log('发送后台心跳包');
-      this.send({ type: 2 });
-    }, 8000); // 8秒间隔，比正常心跳更频繁
-  }
-
-  // 停止后台心跳
-  stopBackgroundHeartbeat() {
-    if (this.backgroundHeartbeatInterval) {
-      clearInterval(this.backgroundHeartbeatInterval);
-      this.backgroundHeartbeatInterval = null;
-      console.log('停止后台心跳');
-    }
-  }
-  //#endregion
 }
 
-export default ChatWebSocket
+export default ChatWebSocket;

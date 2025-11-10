@@ -35,18 +35,17 @@ const router = createRouter({
                 {
                     path: 'UserHub',
                     component: UserHub,
-                    name: 'UserHub',
+                    name: 'UserHub'
                 },
                 {
                     path: 'mail',
                     component: MailBox,
-                    name: 'mail',
-                   
+                    name: 'mail'
                 },
                 {
                     path: 'noticecenter',
                     component: NoticeCenter,
-                    name: 'noticecenter',
+                    name: 'noticecenter'
                 },
                 {
                     path: 'aichat',
@@ -62,25 +61,23 @@ const router = createRouter({
                     path: 'groupchat/:id',
                     name: 'GroupChat',
                     component: () => import('@/views/chat/GroupChat.vue')
-                },
+                }
             ]
         },
         {
             path: '/login',
             component: Login,
-            name: 'login',
+            name: 'login'
         },
         {
             path: '/silent',
-            componnet: silent,
+            component: silent,
             name: 'silent'
         },
-   
- 
         // 404页面
         {
             path: '/:pathMatch(.*)*',
-            component: () => import('../components/404NotFound.vue')
+            component: () => import('../components/misc/404NotFound.vue')
         }
     ],
 })

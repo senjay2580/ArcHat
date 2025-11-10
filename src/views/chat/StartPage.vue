@@ -50,25 +50,30 @@
 </template>
 
 <script setup>
-import { User, ChatDotRound, Setting, UserFilled } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
-const router = useRouter()
+// ==================== 导入依赖 ====================
+// Vue核心
+import { useRouter } from 'vue-router';
 
+// Element Plus
+import { User, ChatDotRound, Setting } from '@element-plus/icons-vue';
 
+// #region 路由
+const router = useRouter();
+// #endregion
 
-
-
+// #region 导航操作
 const handleManageArchive = () => {
-  router.push('/archives')
-}
+  router.push('/archives');
+};
 
 const handleViewMail = () => {
-  router.push('/mail')
-} 
+  router.push('/mail');
+}; 
 
 const handleAIAssistant = () => {
-  router.push('/aichat')
-}
+  router.push('/aichat');
+};
+// #endregion
 </script>
 
 <style scoped>
@@ -122,6 +127,7 @@ const handleAIAssistant = () => {
   margin-bottom: 8px;
   background: linear-gradient(45deg, var(--primary-color), #409EFF);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -210,3 +216,4 @@ const handleAIAssistant = () => {
 
 
 </style> 
+

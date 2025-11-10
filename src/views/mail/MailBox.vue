@@ -223,47 +223,78 @@
 </template>
 
 <script setup>
+// #region 导入依赖
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Delete } from '@element-plus/icons-vue';
-import UserDetailPopup from '@/components/UserDetailPopup.vue';
-import GroupDetailPopup from '@/components/GroupDetailPopup.vue';
-import DangerButton from '@/components/dangerButton.vue';
-import FullScreenDialog from '@/components/FullScreenDialog.vue';
+import UserDetailPopup from '@/components/business/UserDetailPopup.vue';
+import GroupDetailPopup from '@/components/business/GroupDetailPopup.vue';
+import DangerButton from '@/components/form/DangerButton.vue';
+import FullScreenDialog from '@/components/layout/FullScreenDialog.vue';
 import { useRouter } from 'vue-router';
 import { getMyFriendApplyList, getMyFriendReceiveList, handleFriendApply } from '@/api/friend';
-// TODO: 导入群聊相关API
 import { getMyGroupApplyList, updateGroupApplyMsg } from '@/api/room';
 import { calculateLevel } from '@/utils/exp';
 import { useUserInfoStore } from '@/stores/user';
 import { formatDate } from '@/utils/time';
 import emitter from '@/utils/eventBus';
+// #endregion
 
+// #region 基础状态
 const router = useRouter();
-const sentActiveTab = ref('friend');
-const receivedActiveTab = ref('friend');
+const sentActiveTab = ref('friend'); // 我发送的Tab选项: friend/group
+const receivedActiveTab = ref('friend'); // 我收到的Tab选项: friend/group
+// #endregion
 
-// 发送的申请数据
-const sentFriendRequests = ref([]);
-const sentGroupRequests = ref([]);
+// #region 数据存储
+// 申请列表数据
+const sentFriendRequests = ref([]); // 我发送的好友申请列表
+const sentGroupRequests = ref([]); // 我发送的群聊申请列表
+const receivedFriendRequests = ref([]); // 我收到的好友申请列表
+const receivedGroupRequests = ref([]); // 我收到的群聊申请列表
 
-// 收到的申请数据
-const receivedFriendRequests = ref([]);
-const receivedGroupRequests = ref([]);
+// 弹窗相关
+const showUserPop = ref(false); // 用户详情弹窗显示状态
+const showGroupPop = ref(false); // 群聊详情弹窗显示状态
+const currentUser = ref(null); // 当前查看的用户信息
+const currentGroup = ref(null); // 当前查看的群聊信息
+const popupPosition = ref({ x: 0, y: 0 }); // 弹窗位置
 
-const showUserPop = ref(false);
-const showGroupPop = ref(false);
-const currentUser = ref(null);
-const currentGroup = ref(null);
-const popupPosition = ref({ x: 0, y: 0 });
+// 分页相关
+const pageSize = ref(5); // 每页显示数量
+const sentFriendCurrentPage = ref(1); // 发送好友申请当前页
+const sentGroupCurrentPage = ref(1); // 发送群聊申请当前页
+const receivedFriendCurrentPage = ref(1); // 接收好友申请当前页
+const receivedGroupCurrentPage = ref(1); // 接收群聊申请当前页
 
+// 总数
+const sentFriendTotal = ref(0); // 发送好友申请总数
+const sentGroupTotal = ref(0); // 发送群聊申请总数
+const receivedFriendTotal = ref(0); // 接收好友申请总数
+const receivedGroupTotal = ref(0); // 接收群聊申请总数
+
+// 编辑对话框
+const showEditMsgDialog = ref(false); // 编辑消息对话框显示状态
+const editingGroupItem = ref(null); // 正在编辑的群聊申请项
+const editingMsg = ref(''); // 编辑的消息内容
+
+// 申请处理模型
+const applyModel = ref({ // 好友申请处理参数
+  friendId: '',
+  status: ''
+});
+// #endregion
+
+// #region 计算属性
 const popupStyle = computed(() => ({
   position: 'fixed',
   left: `${popupPosition.value.x}px`,
   top: `${popupPosition.value.y}px`,
   zIndex: 1000
 }));
+// #endregion
 
+// #region 工具函数
 const getStatusText = (status) => {
   const statusMap = {
     pending: '等待处理',
@@ -272,16 +303,21 @@ const getStatusText = (status) => {
   };
   return statusMap[status] || status;
 };
-// 处理请求申请的数据模型
-const applyModel = ref({
-  friendId: '',
-  status: ''
-});
 
-// 处理好友申请
+const getStatusFromCode = (code) => {
+  const statusMap = {
+    0: 'pending',
+    1: 'accepted',
+    2: 'rejected'
+  };
+  return statusMap[code] || 'pending';
+};
+// #endregion
+
+
+// #region 好友申请处理
 const handleRequest = async (item, action) => {
   try {
-    console.log('处理申请的数据:', item);
     if (!item.friendId) {
       ElMessage.error('申请人ID不存在');
       return;
@@ -293,9 +329,7 @@ const handleRequest = async (item, action) => {
     const res = await handleFriendApply(applyModel.value);
     if (res.code === 200) {
       ElMessage.success(action === 'accept' ? '已接受申请' : '已拒绝申请');
-      // 刷新列表
       fetchReceivedFriendRequests();
-      // 通知其他组件刷新好友列表
       emitter.emit('refresh-friend-list');
     } else {
       ElMessage.error(res.msg || '操作失败');
@@ -305,9 +339,11 @@ const handleRequest = async (item, action) => {
     ElMessage.error('处理好友申请失败');
   }
 };
+// #endregion
 
+
+// #region 弹窗控制
 const showUserDetail = (user) => {
-  // 构造完整的用户信息
   currentUser.value = {
     id: user.id,
     name: user.name,
@@ -317,7 +353,6 @@ const showUserDetail = (user) => {
     createTime: user.createTime
   };
   
-  // 获取鼠标位置
   const event = window.event;
   popupPosition.value = {
     x: event.clientX - 350,
@@ -333,14 +368,12 @@ const hideUserDetail = () => {
 };
 
 const showGroupDetail = (group) => {
-  // 构造完整的群聊信息
   currentGroup.value = {
     name: group.name,
     avatar: group.avatar,
     createTime: group.time
   };
   
-  // 获取鼠标位置
   const event = window.event;
   popupPosition.value = {
     x: event.clientX + 10,
@@ -354,21 +387,10 @@ const hideGroupDetail = () => {
   showGroupPop.value = false;
   currentGroup.value = null;
 };
+// #endregion
 
-// 分页相关
-const pageSize = ref(5);
-const sentFriendCurrentPage = ref(1);
-const sentGroupCurrentPage = ref(1);
-const receivedFriendCurrentPage = ref(1);
-const receivedGroupCurrentPage = ref(1);
 
-// 为每个列表维护独立的总数
-const sentFriendTotal = ref(0);
-const sentGroupTotal = ref(0);
-const receivedFriendTotal = ref(0);
-const receivedGroupTotal = ref(0);
-
-// 获取我发送的好友申请列表
+// #region 数据获取
 const fetchSentFriendRequests = async () => {
   try {
     const res = await getMyFriendApplyList({
@@ -377,7 +399,6 @@ const fetchSentFriendRequests = async () => {
       pageSize: pageSize.value
     });
     if (res.code === 200) {
-      // 转换数据格式
       sentFriendRequests.value = res.data.records.map(item => ({
         id: item.id,
         name: item.username,
@@ -387,7 +408,6 @@ const fetchSentFriendRequests = async () => {
         userStatus: item.userStatus,
         level: calculateLevel(item.exep || 0)
       }));
-      // 更新发送列表的总数
       sentFriendTotal.value = res.data.total;
     }
   } catch (error) {
@@ -396,7 +416,6 @@ const fetchSentFriendRequests = async () => {
   }
 };
 
-// 获取我收到的好友申请列表
 const fetchReceivedFriendRequests = async () => {
   try {
     const res = await getMyFriendReceiveList({
@@ -405,7 +424,6 @@ const fetchReceivedFriendRequests = async () => {
       pageSize: pageSize.value
     });
     if (res.code === 200) {
-      // 转换数据格式
       receivedFriendRequests.value = res.data.records.map(item => ({
         id: item.id,
         name: item.username,
@@ -416,7 +434,6 @@ const fetchReceivedFriendRequests = async () => {
         userStatus: item.userStatus,
         level: calculateLevel(item.exep || 0)
       }));
-      // 更新接收列表的总数
       receivedFriendTotal.value = res.data.total;
     }
   } catch (error) {
@@ -425,7 +442,6 @@ const fetchReceivedFriendRequests = async () => {
   }
 };
 
-// 获取我发送的群聊申请列表 - TODO: 等待API实现
 const fetchSentGroupRequests = async () => {
   try {
     const res = await getMyGroupApplyList({
@@ -439,7 +455,7 @@ const fetchSentGroupRequests = async () => {
         name: item.name,
         avatar: item.avatar || 'https://placeholder.svg?height=40&width=40&text=G',
         msg: item.msg,
-        status: item.status, // 0: pending, 1: accepted, 2: rejected
+        status: item.status,
         time: item.updateTime
       }));
       sentGroupTotal.value = res.data.total;
@@ -449,93 +465,19 @@ const fetchSentGroupRequests = async () => {
     ElMessage.error('获取群聊申请列表失败');
   }
 };
+// #endregion
 
-// 获取我收到的群聊申请列表 - TODO: 等待API实现
-const fetchReceivedGroupRequests = async () => {
-  // try {
-  //   const res = await getMyGroupReceiveList({
-  //     uid: useUserInfoStore().userInfo.uid,
-  //     page: receivedGroupCurrentPage.value,
-  //     pageSize: pageSize.value
-  //   });
-  //   if (res.code === 200) {
-  //     receivedGroupRequests.value = res.data.records;
-  //     receivedGroupTotal.value = res.data.total;
-  //   }
-  // } catch (error) {
-  //   console.error('获取收到的群聊申请列表失败:', error);
-  //   ElMessage.error('获取收到的群聊申请列表失败');
-  // }
-};
 
-// 状态码转换为状态文本
-const getStatusFromCode = (code) => {
-  const statusMap = {
-    0: 'pending',
-    1: 'accepted',
-    2: 'rejected'
-  };
-  return statusMap[code] || 'pending';
-};
-
-// 监听分页变化
-watch([sentFriendCurrentPage, pageSize], () => {
-  fetchSentFriendRequests();
-});
-
-watch([sentGroupCurrentPage, pageSize], () => {
-  fetchSentGroupRequests();
-});
-
-watch([receivedFriendCurrentPage, pageSize], () => {
-  fetchReceivedFriendRequests();
-});
-
-// TODO: 等待群聊API实现后启用
-// watch([receivedGroupCurrentPage, pageSize], () => {
-//   fetchReceivedGroupRequests();
-// });
-
-// 处理分页大小变化
+// #region 分页处理
 const handleSentFriendSizeChange = (val) => {
   pageSize.value = val;
   sentFriendCurrentPage.value = 1;
 };
 
-// 处理页码变化
 const handleSentFriendCurrentChange = (val) => {
   sentFriendCurrentPage.value = val;
 };
 
-emitter.on('refresh-mail-data', () => {
-  fetchReceivedFriendRequests();
-});
-
-// 组件挂载时获取数据
-onMounted(() => {
-  fetchSentFriendRequests();
-  fetchReceivedFriendRequests();
-  fetchSentGroupRequests();
-  // TODO: 等待群聊API实现后启用
-  // fetchReceivedGroupRequests();
-  
-  // 监听刷新 mail 数据的事件
-  emitter.on('refresh-mail-data', () => {
-    console.log('收到刷新 mail 数据的事件');
-    fetchSentFriendRequests();
-    fetchReceivedFriendRequests();
-    // TODO: 等待群聊API实现后启用
-    // fetchSentGroupRequests();
-    // fetchReceivedGroupRequests();
-  });
-});
-
-// 组件卸载时移除事件监听
-onUnmounted(() => {
-  emitter.off('refresh-mail-data');
-});
-
-// 处理页码改变
 const handleSentGroupCurrentChange = (val) => {
   sentGroupCurrentPage.value = val;
 };
@@ -548,7 +490,6 @@ const handleReceivedGroupCurrentChange = (val) => {
   receivedGroupCurrentPage.value = val;
 };
 
-// 处理每页条数改变
 const handleSentGroupSizeChange = (val) => {
   pageSize.value = val;
   sentGroupCurrentPage.value = 1;
@@ -563,17 +504,9 @@ const handleReceivedGroupSizeChange = (val) => {
   pageSize.value = val;
   receivedGroupCurrentPage.value = 1;
 };
+// #endregion
 
-// 处理好友请求发送事件
-const handleFriendRequestSent = () => {
-  // 刷新发送的好友申请列表
-  fetchSentFriendRequests();
-};
-
-const showEditMsgDialog = ref(false);
-const editingGroupItem = ref(null);
-const editingMsg = ref('');
-
+// #region 群组编辑
 const handleEditGroupMsg = (item) => {
   editingGroupItem.value = item;
   editingMsg.value = item.msg || '';
@@ -599,6 +532,48 @@ const handleSaveGroupMsg = async () => {
 const handleCancelEditMsg = () => {
   showEditMsgDialog.value = false;
 };
+// #endregion
+
+// #region 事件处理
+const handleFriendRequestSent = () => {
+  fetchSentFriendRequests();
+};
+
+emitter.on('refresh-mail-data', () => {
+  fetchReceivedFriendRequests();
+});
+// #endregion
+
+// #region 监听器
+watch([sentFriendCurrentPage, pageSize], () => {
+  fetchSentFriendRequests();
+});
+
+watch([sentGroupCurrentPage, pageSize], () => {
+  fetchSentGroupRequests();
+});
+
+watch([receivedFriendCurrentPage, pageSize], () => {
+  fetchReceivedFriendRequests();
+});
+// #endregion
+
+// #region 生命周期钩子
+onMounted(() => {
+  fetchSentFriendRequests();
+  fetchReceivedFriendRequests();
+  fetchSentGroupRequests();
+  
+  emitter.on('refresh-mail-data', () => {
+    fetchSentFriendRequests();
+    fetchReceivedFriendRequests();
+  });
+});
+
+onUnmounted(() => {
+  emitter.off('refresh-mail-data');
+});
+// #endregion
 </script>
 
 <style scoped>

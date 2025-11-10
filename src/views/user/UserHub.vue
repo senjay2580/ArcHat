@@ -28,44 +28,52 @@
             </div>
             <div class="profile-info flex-1">
               <div class="name-level">
-                <h2 class="text-3xl font-bold mb-2">{{userInfo.username}}</h2>
-                <el-popover
-                  v-model:visible="showPopover"
-                  placement="top"
-                  :width="300"
-                  trigger="manual"
-                  :popper-class="username-popover"
-                >
-                  <template #reference>
-                    <el-icon class="edit-icon" @click="handleEditUsername"><Edit /></el-icon>
-                  </template>
-                  <div class="popover-content">
-                    <div class="popover-header">
-                      <span class="popover-title">修改用户名</span>
-                      <el-icon class="close-icon" @click="showPopover = false"><Close /></el-icon>
-                    </div>
-                    <el-input
-                      v-model="editingUsername"
-                      placeholder="请输入新用户名"
-                      style="height: 45px !important;"
-                      @keyup.enter="saveUsername"
-                    >
-                      <template #append>
-                        <el-button @click="saveUsername" style="display: flex;align-items: center;justify-content: center;">
-                          <svg xmlns="http://www.w3.org/2000/svg"  width="30"  viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="green" d="m10.6 13.8l-2.15-2.15q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7L9.9 15.9q.3.3.7.3t.7-.3l5.65-5.65q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275zM12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>
-                        </el-button>
-                      </template>
-                    </el-input>
+                <div class="name-section">
+                  <h2 class="text-3xl font-bold mb-2">{{userInfo.username}}</h2>
+                  <div class="level-badge" :style="getLevelBadgeStyle(userLevel)">
+                    Lv.{{ userLevel }}
                   </div>
-                </el-popover>
-                <div class="level-badge" :style="getLevelBadgeStyle(userLevel)">
-                  Lv.{{ userLevel }}
+                  <el-popover
+                    v-model:visible="showPopover"
+                    placement="top"
+                    :width="300"
+                    trigger="manual"
+                    :popper-class="username-popover"
+                  >
+                    <template #reference>
+                      <UserCog class="edit-icon" @click="handleEditUsername" />
+                    </template>
+                    <div class="popover-content">
+                      <div class="popover-header">
+                        <span class="popover-title">修改用户名</span>
+                        <el-icon class="close-icon" @click="showPopover = false"><Close /></el-icon>
+                      </div>
+                      <el-input
+                        v-model="editingUsername"
+                        placeholder="请输入新用户名"
+                        style="height: 45px !important;"
+                        @keyup.enter="saveUsername"
+                      >
+                        <template #append>
+                          <el-button @click="saveUsername" style="display: flex;align-items: center;justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg"  width="30"  viewBox="0 0 24 24"><!-- Icon from Material Symbols by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="green" d="m10.6 13.8l-2.15-2.15q-.275-.275-.7-.275t-.7.275t-.275.7t.275.7L9.9 15.9q.3.3.7.3t.7-.3l5.65-5.65q.275-.275.275-.7t-.275-.7t-.7-.275t-.7.275zM12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22"/></svg>
+                          </el-button>
+                        </template>
+                      </el-input>
+                    </div>
+                  </el-popover>
                 </div>
-               
-                <DangerButton type="gradient-orange" @click="handleLogout" class="logout-btn">
-           
-                  <span style=" display: flex;  gap: 5px;padding: 2px;color: white;" > <svg xmlns="http://www.w3.org/2000/svg" width="22"  viewBox="0 0 16 16"><!-- Icon from IcoMoon Free by Keyamoon - https://www.gnu.org/licenses/gpl.html --><path fill="currentColor" d="M6 8H1V6h5V4l3 3l-3 3zm10-8v13l-6 3v-3H4V9h1v3h5V3l4-2H5v4H4V0z"/></svg>退出登录</span>
-                </DangerButton>
+                
+                <div class="logout-container">
+                  <button @click="handleLogout" class="Btn">
+                    <div class="sign">
+                      <svg viewBox="0 0 512 512">
+                        <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"></path>
+                      </svg>
+                    </div>
+                    <div class="text">退出登录</div>
+                  </button>
+                </div>
               </div>
               <div class="exp-bar">
                 <div class="exp-progress" :style="{ width: expPercentage + '%' }"></div>
@@ -506,52 +514,231 @@
 </template>
 
 <script setup>
+// #region 导入依赖
 import { ref, computed, onMounted, watch, h } from 'vue';
-
-import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRouter } from 'vue-router';
-import UserDetailPopup from '@/components/UserDetailPopup.vue';
-import GroupDetailPopup from '@/components/GroupDetailPopup.vue';
-import DangerButton from '@/components/dangerButton.vue';
-import FullScreenDialog from '@/components/FullScreenDialog.vue';
-import SearchDialog from '@/components/SearchDialog.vue';
-import UserDataVisualization from '@/components/UserDataVisualization.vue';
-import { calculateLevel, calculateExpProgress, getLevelBadgeStyle as getExpLevelBadgeStyle, getStatusStyle } from '@/utils/exp';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { SwitchButton, Close, Delete, Search, Plus, Check, Folder, UserFilled, View, MoreFilled, Setting } from '@element-plus/icons-vue';
+import { UserCog } from 'lucide-vue-next';
+
+import UserDetailPopup from '@/components/business/UserDetailPopup.vue';
+import GroupDetailPopup from '@/components/business/GroupDetailPopup.vue';
+import DangerButton from '@/components/form/DangerButton.vue';
+import FullScreenDialog from '@/components/layout/FullScreenDialog.vue';
+import SearchDialog from '@/components/business/SearchDialog.vue';
+import UserDataVisualization from '@/components/business/UserDataVisualization.vue';
+import ExpDialog from '@/components/feedback/ExpDialog.vue';
+import GroupDetailDrawer from '@/components/business/GroupDetailDrawer.vue';
+import WorningTips from '@/components/feedback/WorningTips.vue';
+import SuccessTips from '@/components/feedback/SuccessTips.vue';
+
 import { logoutService, modifyPwdService, modifyUsernameService, modifyAvatarService } from '@/api/user';
 import { deleteFriend } from '@/api/friend';
-import { useUserInfoStore } from '@/stores/user';
-import emitter from '@/utils/eventBus';
 import { getGroupDetail, getGroupMemberCount, listGroupMember, getOtherJoinGroupApplyList, handleGroupJoinApply } from '@/api/room';
+
+import { useUserInfoStore } from '@/stores/user';
 import { useContactStore } from '@/stores/contact';
-import { uploadImageFile } from '@/utils/fileHandler';
-import ExpDialog from '@/components/ExpDialog.vue';
-import GroupDetailDrawer from '@/components/GroupDetailDrawer.vue';
-import WorningTips from '@/components/WorningTips.vue';
-import SuccessTips from '@/components/SuccessTips.vue';
+
+import { calculateLevel, calculateExpProgress, getLevelBadgeStyle as getExpLevelBadgeStyle, getStatusStyle } from '@/utils/exp';
 import { formatDateTime } from '@/utils/time';
-import { SwitchButton,Close,Edit,Delete,Search,Plus,Check,Folder,UserFilled,View,Setting,MoreFilled } from '@element-plus/icons-vue';
+import { uploadImageFile } from '@/utils/fileHandler';
+import emitter from '@/utils/eventBus';
+// #endregion
+
+// #region 基础状态
 const router = useRouter();
 const userInfoStore = useUserInfoStore();
 const contactStore = useContactStore();
 const userInfo = computed(() => userInfoStore.userInfo);
+// #endregion
 
-const showFriendsDialog = ref(false);
-const friendSearchQuery = ref('');
-const showAvatarUploadDialog = ref(false);
-const showGroupDrawer = ref(false);
-const selectedGroupForDrawer = ref(null);
-const showLogoutConfirm = ref(false);
-const showSaveConfirm = ref(false);
-const showSuccessTips = ref(false);
+// #region 数据存储
+// 对话框显示状态
+const showFriendsDialog = ref(false); // 好友列表对话框
+const showAvatarUploadDialog = ref(false); // 头像上传对话框
+const showGroupDrawer = ref(false); // 群聊抽屉
+const showLogoutConfirm = ref(false); // 退出登录确认对话框
+const showSaveConfirm = ref(false); // 保存设置确认对话框
+const showSuccessTips = ref(false); // 成功提示显示状态
+const showPopover = ref(false); // 用户名编辑弹窗显示状态
+const showAddFriendDialog = ref(false); // 添加好友对话框
+const showSearchDialog = ref(false); // 搜索对话框
+const showManageGroupsDialog = ref(false); // 管理群聊对话框
+const showManageGroupDetailPopup = ref(false); // 管理群聊详情弹窗
+const showExpDialog = ref(false); // 经验值对话框
 
-// 等级相关数据
-const userExp = computed(() => userInfo.value.exep);
+// 输入和编辑
+const friendSearchQuery = ref(''); // 好友搜索关键词
+const editingUsername = ref(''); // 正在编辑的用户名
+
+// 表单数据
+const settingsForm = ref({ // 设置表单
+  oldPassword: '', // 旧密码
+  newPassword: '', // 新密码
+  confirmPassword: '' // 确认密码
+});
+
+const groupForm = ref({ // 群聊表单
+  name: '', // 群名
+  avatar: '', // 群头像
+  announcement: '' // 群公告
+});
+
+// 选中的数据
+const selectedGroupForDrawer = ref(null); // 抽屉中选中的群聊
+const selectedManageGroup = ref(null); // 管理页面选中的群聊
+
+const props = defineProps({
+  friendList: {
+    type: Array,
+    default: () => []
+  },
+  groupList: {
+    type: Array,
+    default: () => []
+  }
+});
+
+// 用户详情弹窗
+const showUserDetail = ref(false); // 用户详情弹窗显示状态
+const selectedUser = ref({ // 选中的用户信息
+  id: '',
+  name: '',
+  avatar: '',
+  level: '',
+  status: '',
+  createTime: '',
+});
+const userDetailPosition = ref({ x: 0, y: 0 }); // 用户详情弹窗位置
+
+// 群聊详情弹窗
+const showGroupDetail = ref(false); // 群聊详情弹窗显示状态
+const selectedGroup = ref({ // 选中的群聊信息
+  id: '',
+  name: '',
+  avatar: '',
+  memberCount: 0,
+  createTime: '',
+  owner: '',
+  announcement: '',
+  members: []
+});
+const groupDetailPosition = ref({ x: 0, y: 0 }); // 群聊详情弹窗位置
+
+// 搜索相关
+const searchResults = ref([]); // 搜索结果列表
+const searchType = ref('friend'); // 搜索类型
+const activeTab = ref('friends'); // 活动标签页
+
+// 群聊管理相关
+const manageGroupsTab = ref('groups'); // 管理群聊标签页
+const manageGroupDetailPosition = ref({ x: 0, y: 0 }); // 管理群聊详情弹窗位置
+
+// 分页数据
+const groupsPage = ref(1); // 群聊列表当前页
+const groupsPageSize = ref(5); // 群聊列表每页数量
+const requestsPage = ref(1); // 申请列表当前页
+const requestsPageSize = ref(5); // 申请列表每页数量
+const requestsTotal = ref(0); // 申请列表总数
+const groupJoinRequests = ref([]); // 群聊加入申请列表
+const filterGroupId = ref(''); // 筛选群聊ID
+const filterDateRange = ref([]); // 筛选日期范围
+const requestLoadingMap = ref({}); // 申请加载状态Map
+
+// 头像上传相关
+const avatarInputRef = ref(null); // 头像上传input引用
+const avatarFile = ref(null); // 头像文件
+const avatarPreview = ref(''); // 头像预览URL
+const avatarUploading = ref(false); // 头像上传中状态
+// #endregion
+
+// #region 计算属性
+/**
+ * 用户经验值
+ */
+const userExp = computed(() => userInfo.value.exp);
+
+/**
+ * 用户等级
+ */
 const userLevel = computed(() => calculateLevel(userExp.value));
+
+/**
+ * 当前等级经验值进度
+ */
 const { currentExp, nextLevelExp, percentage: expPercentage } = computed(() => 
   calculateExpProgress(userExp.value, userLevel.value)
 ).value;
 
-// 获取等级样式
+/**
+ * 格式化后的好友列表
+ */
+const friends = computed(() => props.friendList.map(friend => ({
+  id: friend.id,
+  name: friend.username,
+  avatar: friend.avatar,
+  status: friend.status,
+  createTime: friend.createTime,
+  level: calculateLevel(friend.exp || 0)
+})));
+
+/**
+ * 格式化后的群聊列表
+ */
+const groups = computed(() => props.groupList.map(group => ({
+  id: group.roomId,
+  name: group.name,
+  avatar: group.avatar,
+  memberCount: group.memberCount || 0,
+  createTime: group.createTime || '',
+  owner: group.owner || '',
+  announcement: group.groupDesc || '',
+  members: group.members || []
+})));
+
+/**
+ * 过滤后的好友列表
+ */
+const filteredFriends = computed(() => {
+  if (!friendSearchQuery.value) return friends.value;
+  return friends.value.filter(friend => 
+    friend.name.toLowerCase().includes(friendSearchQuery.value.toLowerCase())
+  );
+});
+
+/**
+ * 分页后的群聊列表
+ */
+const pagedGroups = computed(() => {
+  const start = (groupsPage.value - 1) * groupsPageSize.value;
+  return groups.value ? groups.value.slice(start, start + groupsPageSize.value) : [];
+});
+
+/**
+ * 分页并过滤后的群聊加入申请列表
+ */
+const pagedRequests = computed(() => {
+  let filtered = groupJoinRequests.value;
+  if (filterGroupId.value) {
+    filtered = filtered.filter(req => req.roomId == filterGroupId.value);
+  }
+  if (filterDateRange.value && filterDateRange.value.length === 2) {
+    const [start, end] = filterDateRange.value;
+    filtered = filtered.filter(req => {
+      const t = req.time ? req.time.slice(0, 10) : '';
+      return t >= start && t <= end;
+    });
+  }
+  return filtered;
+});
+// #endregion
+
+// #region 工具函数
+/**
+ * 获取等级徽章样式
+ * @param {number} level - 等级
+ * @returns {Object} 样式对象
+ */
 const getLevelBadgeStyle = (level) => {
   return {
     ...getExpLevelBadgeStyle(level),
@@ -562,19 +749,20 @@ const getLevelBadgeStyle = (level) => {
     color: 'white'
   };
 };
+// #endregion
 
-// 设置表单数据
-const settingsForm = ref({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-});
-const editingUsername = ref('');
-const showPopover = ref(false);
+// #region 用户名编辑
+/**
+ * 处理编辑用户名按钮点击
+ */
 const handleEditUsername = () => {
   editingUsername.value = userInfo.value.username;
   showPopover.value = true;
 };
+
+/**
+ * 保存用户名修改
+ */
 const saveUsername = async () => {
   if(editingUsername.value === '') {
     ElMessage.warning('用户名不能为空');
@@ -607,7 +795,12 @@ const saveUsername = async () => {
     ElMessage.error('修改失败，请稍后重试');
   }
 };
-// 保存设置（修改密码）
+// #endregion
+
+// #region 密码修改
+/**
+ * 保存设置（显示确认对话框）
+ */
 const saveSettings = () => {
   if (!settingsForm.value.oldPassword || !settingsForm.value.newPassword) {
     ElMessage.warning('请填写完整的密码信息');
@@ -616,7 +809,9 @@ const saveSettings = () => {
   showSaveConfirm.value = true;
 };
 
-// 确认保存设置
+/**
+ * 确认保存设置
+ */
 const confirmSaveSettings = async () => {
   try {
     const res = await modifyPwdService({
@@ -648,12 +843,16 @@ const confirmSaveSettings = async () => {
   showSaveConfirm.value = false;
 };
 
-// 取消保存设置
+/**
+ * 取消保存设置
+ */
 const cancelSaveSettings = () => {
   showSaveConfirm.value = false;
 };
 
-// 关闭成功提示
+/**
+ * 关闭成功提示
+ */
 const closeSuccessTips = () => {
   showSuccessTips.value = false;
   settingsForm.value.oldPassword = '';
@@ -662,61 +861,14 @@ const closeSuccessTips = () => {
   userInfoStore.removeUserInfo();
   router.push('/login');
 };
+// #endregion
 
-const props = defineProps({
-  friendList: {
-    type: Array,
-    default: () => []
-  },
-  groupList: {
-    type: Array,
-    default: () => []
-  }
-});
-
-// 将 props 中的 friendList 转换为组件内部使用的 friends 数据
-const friends = computed(() => props.friendList.map(friend => ({
-  id: friend.id,
-  name: friend.username,
-  avatar: friend.avatar,
-  status: friend.status,
-  createTime: friend.createTime,
-  level: calculateLevel(friend.exep || 0)
-})));
-
-// 群聊列表数据
-const groups = computed(() => props.groupList.map(group => ({
-  id: group.roomId,
-  name: group.name,
-  avatar: group.avatar,
-  memberCount: group.memberCount || 0,
-  createTime: group.createTime || '',
-  owner: group.owner || '',
-  announcement: group.groupDesc || '',
-  members: group.members || []
-})));
-
-// 根据搜索过滤好友列表
-const filteredFriends = computed(() => {
-  if (!friendSearchQuery.value) return friends.value;
-  return friends.value.filter(friend => 
-    friend.name.toLowerCase().includes(friendSearchQuery.value.toLowerCase())
-  );
-});
-
-// 用户详情相关
-const showUserDetail = ref(false);
-const selectedUser = ref({
-  id: '',
-  name: '',
-  avatar: '',
-  level: '',
-  status: '',
-  createTime: '',
-});
-const userDetailPosition = ref({ x: 0, y: 0 });
-
-// 处理查看好友详情
+// #region 好友管理
+/**
+ * 查看好友详情
+ * @param {Object} friend - 好友对象
+ * @param {Event} event - 点击事件
+ */
 const handleView = (friend, event) => {
   selectedUser.value = {
     ...friend,
@@ -736,6 +888,10 @@ const handleView = (friend, event) => {
   showUserDetail.value = true;
 };
 
+/**
+ * 删除好友
+ * @param {Object} friend - 好友对象
+ */
 const handleDelete = async (friend) => {
   try {
     const res = await deleteFriend(friend.id);
@@ -752,22 +908,14 @@ const handleDelete = async (friend) => {
     ElMessage.error('删除好友失败');
   }
 };
+// #endregion
 
-// 群聊相关
-const showGroupDetail = ref(false);
-const selectedGroup = ref({
-  id: '',
-  name: '',
-  avatar: '',
-  memberCount: 0,
-  createTime: '',
-  owner: '',
-  announcement: '',
-  members: []
-});
-const groupDetailPosition = ref({ x: 0, y: 0 });
-
-// 处理群聊卡片点击
+// #region 群聊管理
+/**
+ * 处理群聊卡片点击
+ * @param {Object} group - 群聊对象
+ * @param {Event} event - 点击事件
+ */
 const handleGroupClick = async (group, event) => {
   const rect = event.target.getBoundingClientRect();
   groupDetailPosition.value = {
@@ -804,7 +952,11 @@ const handleGroupClick = async (group, event) => {
   showGroupDetail.value = true;
 };
 
-// 处理群聊more按钮点击
+/**
+ * 处理群聊 more按钮点击，打开群聊详情抽屉
+ * @param {Object} group - 群聊对象
+ * @param {Event} event - 点击事件
+ */
 const handleGroupMoreClick = async (group, event) => {
 
   let detail = {};
@@ -841,13 +993,19 @@ const handleGroupMoreClick = async (group, event) => {
 
   showGroupDrawer.value = true;
 };
+// #endregion
 
-// 处理退出登录
+// #region 退出登录
+/**
+ * 处理退出登录按钮点击
+ */
 const handleLogout = () => {
   showLogoutConfirm.value = true;
 };
 
-// 确认退出登录
+/**
+ * 确认退出登录
+ */
 const confirmLogout = async () => {
   try {
     const token = userInfo.value.token;
@@ -867,40 +1025,43 @@ const confirmLogout = async () => {
   showLogoutConfirm.value = false;
 };
 
-// 取消退出登录
+/**
+ * 取消退出登录
+ */
 const cancelLogout = () => {
   showLogoutConfirm.value = false;
 };
-// 添加新的响应式变量
-const showAddFriendDialog = ref(false);
+// #endregion
 
-const searchResults = ref([]);
-const groupForm = ref({
-  name: '',
-  avatar: '',
-  announcement: ''
-});
+// #region 搜索和好友相关
+/**
+ * 获取好友列表
+ */
+const fetchFriendList = async () => {
+  // TODO: 实现获取好友列表的逻辑
+};
 
-// 删除原有的搜索相关变量
-const showSearchDialog = ref(false);
-const searchType = ref('friend');
-
-// 处理显示搜索弹窗
+/**
+ * 显示搜索对话框
+ * @param {string} type - 搜索类型: 'friend' | 'group'
+ */
 const handleShowSearchDialog = (type) => {
   searchType.value = type;
   showSearchDialog.value = true;
 };
 
-// 添加新的响应式变量
-const activeTab = ref('friends')
-
-// 处理好友请求发送事件
+/**
+ * 处理好友请求发送事件
+ */
 const handleFriendRequestSent = () => {
   // 刷新好友列表
   fetchFriendList();
 };
 
-// 处理开始聊天
+/**
+ * 处理开始聊天
+ * @param {Object} user - 用户对象
+ */
 const handleStartChat = (user) => {
   // 先关闭好友管理弹窗
   showFriendsDialog.value = false;
@@ -908,11 +1069,9 @@ const handleStartChat = (user) => {
   // 直接跳转到聊天界面
   router.push(`/chat/${user.id}`);
 };
+// #endregion
 
-const showManageGroupsDialog = ref(false);
-const manageGroupsTab = ref('groups');
-
-
+// #region 自定义图标组件
 const ManageIcon = {
   name: 'ManageIcon',
   render() {
@@ -939,15 +1098,12 @@ const RequestIcon = {
     ]);
   }
 };
+// #endregion
 
-// 分页相关变量和分页数据
-const groupsPage = ref(1);
-const groupsPageSize = ref(5);
-const requestsPage = ref(1);
-const requestsPageSize = ref(5);
-const requestsTotal = ref(0);
-const groupJoinRequests = ref([]);
-
+// #region 群聊加入申请管理
+/**
+ * 获取群聊加入申请列表
+ */
 const fetchGroupJoinRequests = async () => {
   try {
     const res = await getOtherJoinGroupApplyList({
@@ -974,40 +1130,11 @@ const fetchGroupJoinRequests = async () => {
   }
 };
 
-watch([requestsPage, requestsPageSize], fetchGroupJoinRequests);
-
-onMounted(() => {
-  fetchGroupJoinRequests();
-});
-const pagedGroups = computed(() => {
-  const start = (groupsPage.value - 1) * groupsPageSize.value;
-  return groups.value ? groups.value.slice(start, start + groupsPageSize.value) : [];
-});
-const filterGroupId = ref('');
-const filterDateRange = ref([]);
-const pagedRequests = computed(() => {
-  let filtered = groupJoinRequests.value;
-  // 按群聊id筛选
-  if (filterGroupId.value) {
-    filtered = filtered.filter(req => req.roomId == filterGroupId.value);
-  }
-  // 按时间筛选
-  if (filterDateRange.value && filterDateRange.value.length === 2) {
-    const [start, end] = filterDateRange.value;
-    filtered = filtered.filter(req => {
-      const t = req.time ? req.time.slice(0, 10) : '';
-      return t >= start && t <= end;
-    });
-  }
-  return filtered;
-});
-
-// 添加新的状态用于管理群聊弹窗中的群聊详情
-const showManageGroupDetailPopup = ref(false);
-const selectedManageGroup = ref(null);
-const manageGroupDetailPosition = ref({ x: 0, y: 0 });
-
-// 管理群聊页面中的群聊卡片点击处理
+/**
+ * 处理管理群聊卡片点击
+ * @param {Object} group - 群聊对象
+ * @param {Event} event - 点击事件
+ */
 const handleManageGroupCardClick = async (group, event) => {
   // 获取点击元素的位置
   const rect = event.currentTarget.getBoundingClientRect();
@@ -1050,12 +1177,25 @@ const handleManageGroupMoreClick = (group) => {
   showGroupDrawer.value = true;
 };
 
-const avatarInputRef = ref(null);
-const avatarFile = ref(null);
-const avatarPreview = ref('');
-const avatarUploading = ref(false);
-const showExpDialog = ref(false);
+const handleRequestAction = async (req, status) => {
+  console.log(req, status);
+  if (requestLoadingMap.value[req.id]) return;
+  requestLoadingMap.value = { ...requestLoadingMap.value, [req.id]: true };
+  try {
+    await handleGroupJoinApply({ id: req.id, status });
+    ElMessage.success(status === 1 ? '已同意' : '已拒绝');
+    await fetchGroupJoinRequests();
+  } catch (e) {
+    ElMessage.error('操作失败');
+  } finally {
+    requestLoadingMap.value = { ...requestLoadingMap.value, [req.id]: false };
+  }
+};
 
+watch([requestsPage, requestsPageSize], fetchGroupJoinRequests);
+// #endregion
+
+// #region 头像上传
 function handleDropAvatar(e) {
   const file = e.dataTransfer.files[0];
   if (file) setAvatarFile(file);
@@ -1102,25 +1242,9 @@ async function handleAvatarUpload() {
     avatarUploading.value = false;
   }
 }
+// #endregion
 
-const requestLoadingMap = ref({}); // 记录每个申请的loading状态
-
-const handleRequestAction = async (req, status) => {
-  console.log(req, status);
-  if (requestLoadingMap.value[req.id]) return;
-  requestLoadingMap.value = { ...requestLoadingMap.value, [req.id]: true };
-  try {
-
-    await handleGroupJoinApply({ id: req.id, status });
-    ElMessage.success(status === 1 ? '已同意' : '已拒绝');
-    await fetchGroupJoinRequests();
-  } catch (e) {
-    ElMessage.error('操作失败');
-  } finally {
-    requestLoadingMap.value = { ...requestLoadingMap.value, [req.id]: false };
-  }
-};
-
+// #region 工具函数
 function formatArcAge(createTime) {
   if (!createTime) return ''
   const now = new Date()
@@ -1134,17 +1258,31 @@ function formatArcAge(createTime) {
   const leftDays = diffDays % 365
   return years + '年' + (leftDays > 0 ? leftDays + '天' : '')
 }
+// #endregion
+
+// #region 生命周期钩子
+onMounted(() => {
+  fetchGroupJoinRequests();
+});
+// #endregion
 </script>
 
 <style scoped>
 @import '/src/assets/styles/level.css';
 
+/* CSS变量 - 统一管理重复样式 */
+:root {
+  --transition-ease: all 0.3s ease;
+  --box-shadow-light: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --box-shadow-hover: 0 4px 24px rgba(64, 158, 255, 0.18);
+  --box-shadow-dark: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
 
 .personal-center {
   padding: 0 8%;
   background-color: #f5f7fa;
   min-height: 100vh;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .stats-card .stats-content {
@@ -1161,13 +1299,13 @@ function formatArcAge(createTime) {
   font-size: 1.5rem;
   font-weight: bold;
   color: #d43f09;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .stats-card .stat-label {
   font-size: 0.875rem;
   color: #020100;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .friends-list {
@@ -1176,7 +1314,7 @@ function formatArcAge(createTime) {
   background: white;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-light);
 }
 
 .friends-avatars {
@@ -1195,13 +1333,14 @@ function formatArcAge(createTime) {
 .group-card {
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: var(--box-shadow-light);
+  transition: var(--transition-ease);
   position: relative;
 }
 
@@ -1216,22 +1355,23 @@ function formatArcAge(createTime) {
 .group-name {
   font-weight: 600;
   margin-bottom: 4px;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .group-more-btn {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: rgba(64, 158, 255, 0.1);
+  background: rgba(0,0,0,0.05);
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
   opacity: 0;
   transform: scale(0.8);
 }
@@ -1242,7 +1382,7 @@ function formatArcAge(createTime) {
 }
 
 .group-more-btn:hover {
-  background: rgba(64, 158, 255, 0.2);
+  background: rgba(0,0,0,0.1);
   transform: scale(1.1);
 }
 
@@ -1268,11 +1408,11 @@ function formatArcAge(createTime) {
   overflow: hidden;
 }
 
-.exp-progress {
+.exp-bar-fill {
   height: 100%;
   background: linear-gradient(90deg, #409EFF, #67C23A);
   border-radius: 4px;
-  transition: width 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .exp-text {
@@ -1281,7 +1421,7 @@ function formatArcAge(createTime) {
   top: -20px;
   font-size: 12px;
   color: #909399;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .friends-dialog-content {
@@ -1302,17 +1442,18 @@ function formatArcAge(createTime) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 12px;
   border-radius: 8px;
   background-color: var(--light-bg);
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
   border: 1px solid var(--light-border);
 }
 
 .friend-item:hover {
   background-color: var(--light-hover);
   transform: translateY(-2px);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-light);
 }
 
 .friend-info {
@@ -1330,19 +1471,18 @@ function formatArcAge(createTime) {
 }
 
 .friend-name {
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 500;
   color: var(--light-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .friend-status {
   font-size: 12px;
   color: var(--light-secondary-text);
-  transition: all 0.3s ease;
+  transition: var(--transition-ease);
 }
 
 .friend-actions {
@@ -1428,7 +1568,7 @@ function formatArcAge(createTime) {
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow-light);
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -1492,13 +1632,21 @@ function formatArcAge(createTime) {
 }
 
 .edit-icon {
-  color: #ee3e4d;
+  color: #737085;
   cursor: pointer;
   transition: all 0.3s ease;
+  outline: none;
+  border: none;
 }
 
 .edit-icon:hover {
   transform: scale(1.1);
+}
+
+.edit-icon:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
 }
 
 .popover-header {
@@ -2183,6 +2331,110 @@ function formatArcAge(createTime) {
 .dark-mode :deep(img.user-avatar),
 .dark-mode :deep(.user-avatar-img) {
   background: linear-gradient(135deg, #23263a 0%, #409eff 100%) border-box;
-  box-shadow: 0 4px 18px 0 #00000033, 0 1.5px 6px 0 #409eff33;
+}
+
+/* 布局调整 */
+.name-level {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 20px;
+}
+
+.name-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.logout-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 150px; /* 为按钮展开预留空间 */
+}
+
+/* 模仿 Uiverse.io 的退出登录按钮样式 */
+.Btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 45px;
+  height: 45px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition-duration: .3s;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
+  background-color: rgb(255, 65, 65);
+  z-index: 10; /* 确保按钮在最上层 */
+}
+
+/* plus sign */
+.sign {
+  width: 100%;
+  transition-duration: .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sign svg {
+  width: 17px;
+}
+
+.sign svg path {
+  fill: white;
+}
+
+/* text */
+.text {
+  
+  position: absolute;
+  right: -10%;
+  width: 0%;
+  opacity: 0;
+  color: white;
+  font-size: 1em;
+  font-weight: 600;
+  transition-duration: .3s;
+  white-space: nowrap;
+}
+
+/* hover effect on button width */
+.Btn:hover {
+  width: 125px;
+  border-radius: 40px;
+  transition-duration: .3s;
+}
+
+.Btn:hover .sign {
+  width: 30%;
+  transition-duration: .3s;
+  padding-left: 20px;
+}
+
+/* hover effect button's text */
+.Btn:hover .text {
+  opacity: 1;
+  width: 70%;
+  transition-duration: .3s;
+  padding-right: 10px;
+}
+
+/* button click effect*/
+.Btn:active {
+  transform: translate(2px ,2px);
+}
+
+/* 暗色模式适配 */
+.dark-mode .Btn {
+  background-color: rgb(220, 53, 69);
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
 }
 </style>
+

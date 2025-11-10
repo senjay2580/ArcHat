@@ -38,7 +38,19 @@
             <div v-if="shouldShowTime(msg, idx)" class="message-time-group">
               <span class="time-divider">{{ formatMessageDate(new Date(msg.time)) }}</span>
             </div>
-            <div :class="['chat-message-item', msg.side]">
+            <!-- 撤回消息特殊样式 -->
+            <div v-if="msg.isRecalled || msg.type === 2" class="recall-message-wrapper">
+              <div class="recall-message-content">
+                <svg class="recall-icon" viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10s10-4.477 10-10S17.523 2 12 2" opacity=".5"/>
+                  <path fill="currentColor" d="M10.564 7.461a.75.75 0 1 1 .871 1.22l-3.221 2.302a1.25 1.25 0 0 0 0 2.034l3.221 2.301a.75.75 0 1 1-.871 1.22l-3.222-2.3a2.75 2.75 0 0 1 0-4.476z"/>
+                  <path fill="currentColor" d="M16.5 15.132V8.869a1 1 0 0 0-1.555-.832l-4.697 3.131a1 1 0 0 0 0 1.664l4.697 3.132a1 1 0 0 0 1.555-.832"/>
+                </svg>
+                <span class="recall-text">{{ msg.body }}</span>
+              </div>
+            </div>
+            <!-- 普通消息 -->
+            <div v-else :class="['chat-message-item', msg.side]">
                 <el-avatar v-if="msg.side === 'left'" :size="40" class="user-avatar"
                 :src="msg.avatar && msg.avatar.trim() ? msg.avatar : undefined" :alt="msg.username"
                 @click="(e) => handleAvatarClick(e, msg)" style="cursor:pointer;">
@@ -54,28 +66,73 @@
                   {{ msg.username }}
                 </div>
                 <!-- 文件消息 -->
-                <template v-if="msg.type === 4 && msg.text && msg.text.url">
-                  <div :class="['file-msg', getFileTypeClass(msg.text.fileName)]">
-                    <a :href="msg.text.url" :download="msg.text.fileName" target="_blank">
-                      <span class="file-msg-icon" v-html="getFileSvg(msg.text.fileName.split('.').pop().toLowerCase())"></span>
-                      <span class="file-msg-name">{{ msg.text.fileName }}</span>
-                      <span class="file-msg-size">({{ formatFileSize(msg.text.size) }})</span>
+                <template v-if="msg.type === 4 && msg.body && msg.body.url">
+                  <div :class="['file-msg', getFileTypeClass(msg.body.fileName || msg.body.name)]">
+                    <a :href="msg.body.url" :download="msg.body.fileName || msg.body.name" target="_blank">
+                      <span class="file-msg-icon" v-html="getFileSvg((msg.body.fileName || msg.body.name).split('.').pop().toLowerCase())"></span>
+                      <span class="file-msg-name">{{ msg.body.fileName || msg.body.name }}</span>
+                      <span class="file-msg-size">({{ formatFileSize(msg.body.size) }})</span>
                     </a>
                   </div>
                 </template>
                 <!-- 图片消息 -->
-                <template v-else-if="msg.type === 3 && msg.text && msg.text.url">
-                  <el-image :src="msg.text.url" :preview-src-list="[msg.text.url]" class="img-shadow"
+                <template v-else-if="msg.type === 3 && msg.body && msg.body.url">
+                  <el-image :src="msg.body.url" :preview-src-list="[msg.body.url]" class="img-shadow"
                     style="max-width:280px;max-height:580px;border-radius:8px;" />
                 </template>
                 <!-- 普通文本消息 -->
                 <template v-else>
-                  <div class="chat-bubble" v-html="msg.text"></div>
+                  <div class="chat-bubble" v-html="getMessageText(msg)"></div>
                 </template>
               </div>
               <el-avatar v-if="msg.side === 'right'" :size="40" class="user-avatar" :src="userStore.userInfo.avatar" />
             </div>
           </template>
+        </div>
+        <!-- 加载中的消息 -->
+        <div v-for="(loadingMsg, idx) in loadingMessages" :key="'loading-' + idx" 
+             class="message-wrapper">
+          <div class="chat-message-item right">
+            <div class="msg-main">
+              <!-- 文本消息加载状态 -->
+              <div v-if="loadingMsg.type === 'text'" class="message-container message-sending">
+                <div class="chat-bubble">{{ loadingMsg.content }}</div>
+                <!-- 右下角加载动画 -->
+                <div v-if="loadingMsg.status === 'sending'" class="message-loading-indicator">
+                  <div class="loading-spinner-mini"></div>
+                </div>
+              </div>
+              <!-- 图片消息加载状态 -->
+              <div v-else-if="loadingMsg.type === 'image'" class="message-container message-sending">
+                <img :src="loadingMsg.previewUrl" alt="发送中" class="img-shadow" 
+                     style="max-width:280px;max-height:580px;border-radius:8px;" />
+                <!-- 右下角加载动画 -->
+                <div v-if="loadingMsg.status === 'sending'" class="message-loading-indicator">
+                  <div class="loading-spinner-mini"></div>
+                </div>
+              </div>
+              <!-- 文件消息加载状态 -->
+              <div v-else-if="loadingMsg.type === 'file'" class="message-container message-sending">
+                <div class="file-msg" :class="getFileTypeClass(loadingMsg.fileExt)">
+                  <span class="file-msg-icon" v-html="getFileSvg(loadingMsg.fileExt)"></span>
+                  <span class="file-msg-name">{{ loadingMsg.fileName }}</span>
+                  <span class="file-msg-size">({{ formatFileSize(loadingMsg.fileSize) }})</span>
+                </div>
+                <!-- 右下角加载动画 -->
+                <div v-if="loadingMsg.status === 'sending'" class="message-loading-indicator">
+                  <div class="loading-spinner-mini"></div>
+                </div>
+              </div>
+              <!-- 发送失败的重发按钮 -->
+              <div v-if="loadingMsg.status === 'failed'" class="message-retry-btn" @click="retryMessage(loadingMsg)">
+                <svg class="retry-icon" viewBox="0 0 24 24" width="16" height="16">
+                  <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                重发
+              </div>
+            </div>
+            <el-avatar :size="40" class="user-avatar" :src="userStore.userInfo.avatar" />
+          </div>
         </div>
       </template>
       <template v-else>
@@ -223,58 +280,70 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted, watch, nextTick, computed, onBeforeUnmount } from 'vue';
-import EmojiPickerPopup from '@/components/EmojiPickerPopup.vue';
+// #region 导入依赖
+import { ref, onMounted, watch, nextTick, computed, onBeforeUnmount, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useDark } from '@vueuse/core';
+import { ElMessage } from 'element-plus';
 import { ChatRound, Link, Position, UserFilled, Close, Picture, UploadFilled } from '@element-plus/icons-vue';
 import 'emoji-picker-element';
-import { useDark } from '@vueuse/core';
-import { useRoute } from 'vue-router';
+
+import EmojiPickerPopup from '@/components/interaction/EmojiPickerPopup.vue';
+import Loading from '@/components/feedback/loading.vue';
+import MacWindowControls from '@/components/layout/MacWindowControls.vue';
+import GroupDetailPopup from '@/components/business/GroupDetailPopup.vue';
+import DangerButton from '@/components/form/DangerButton.vue';
+import UserDetailPopup from '@/components/business/UserDetailPopup.vue';
+import WaitConnLoading from '@/components/feedback/WaitConnLoading.vue';
+import RightKeyPop from '@/components/interaction/RightKeyPop.vue';
+import ExpDialog from '@/components/feedback/ExpDialog.vue';
+import GroupDetailDrawer from '@/components/business/GroupDetailDrawer.vue';
+
+import { getGroupDetail, listGroupMember, getGroupMemberCount } from '@/api/room';
+import { getGroupMessageList, sendMsg, recallMsg } from '@/api/chatService';
+import { searchFriends, addFriend } from '@/api/friend';
+
 import { useUserInfoStore } from '@/stores/user';
 import { useContactStore } from '@/stores/contact';
-import { getGroupDetail, listGroupMember, getGroupMemberCount } from '@/api/room';
-import { getGroupMessageList } from '@/api/chatService';
-import Loading from '@/components/loading.vue';
-import MacWindowControls from '@/components/MacWindowControls.vue';
-import GroupDetailPopup from '@/components/GroupDetailPopup.vue';
+
 import { formatDateTime } from '@/utils/time';
-import dangerButton from '@/components/dangerButton.vue';
-import emitter from '@/utils/eventBus';
-import UserDetailPopup from '@/components/UserDetailPopup.vue';
-import { useRouter } from 'vue-router';
-import { searchFriends } from '@/api/friend';
 import { calculateLevel } from '@/utils/exp';
-import { addFriend } from '@/api/friend';
-import { sendMsg } from '@/api/chatService';
-import { onUnmounted } from 'vue';
-import WaitConnLoading from '@/components/WaitConnLoading.vue';
 import { uploadImageFile } from '@/utils/fileHandler';
-import { ElMessage } from 'element-plus';
 import { getFileSvg } from '@/utils/filesIcons';
-import RightKeyPop from '@/components/RightKeyPop.vue';
-import ExpDialog from '@/components/ExpDialog.vue'
-import GroupDetailDrawer from '@/components/GroupDetailDrawer.vue';
-const isReconnecting = ref(false);
+import emitter from '@/utils/eventBus';
+import ArcMessage from '@/utils/ArcMessage';
+// #endregion
+
+// #region 基础状态
 const route = useRoute();
+const router = useRouter();
 const userStore = useUserInfoStore();
 const contactStore = useContactStore();
-const inputValue = ref('');
-const messages = ref([]);
-const observer = ref(null);
-const page = ref(1);
-const pageSize = 100;
-const hasMore = ref(true);
-const showEmojiPicker = ref(false);
-const recentEmojis = ref([]);
-const isDarkMode = useDark();
-const messagesContainer = ref(null);
-const messageInput = ref(null);
-const isLoading = ref(false);
-const emojiPanel = ref(null);
-const emojiButton = ref(null);
-const inputContainer = ref(null);
-const showMemberDrawer = ref(false);
-const memberMap = ref({}); // 群成员id->member对象映射
-const currentGroup = ref({
+// #endregion
+
+// #region 数据存储
+// 消息相关
+const messages = ref([]); // 群聊消息列表
+const inputValue = ref(''); // 输入框内容
+const messagesContainer = ref(null); // 消息容器DOM引用
+const messageInput = ref(null); // 输入框DOM引用
+const loadingMessages = ref([]); // 正在加载的消息ID列表
+const observer = ref(null); // Intersection Observer实例（懒渲染）
+
+// 分页相关
+const page = ref(1); // 当前页码
+const pageSize = 100; // 每页消息数量
+const hasMore = ref(true); // 是否还有更多历史消息
+
+// 表情选择器
+const showEmojiPicker = ref(false); // 表情选择器显示状态
+const recentEmojis = ref([]); // 最近使用的表情
+const emojiPanel = ref(null); // 表情面板DOM引用
+const emojiButton = ref(null); // 表情按钮DOM引用
+const inputContainer = ref(null); // 输入容器DOM引用
+
+// 群组信息
+const currentGroup = ref({ // 当前群聊信息
   id: '',
   roomId: '',
   name: '',
@@ -285,6 +354,13 @@ const currentGroup = ref({
   members: [],
   onlineCount: 0
 });
+const memberMap = ref({}); // 群成员映射表（id -> member）
+const showMemberDrawer = ref(false); // 群成员抽屉显示状态
+
+// UI状态
+const isLoading = ref(false); // 页面加载状态
+const isReconnecting = ref(false); // WebSocket重连中状态
+const isDarkMode = useDark(); // 暗黑模式状态
 const menuItems = ref([
 {
       key: 'share',
@@ -329,32 +405,7 @@ const menuItems = ref([
   },
   separatorAfter: false
 }])
-// 新增：在线人数计算属性
-const onlineCount = computed(() => {
-  return (currentGroup.value.members || []).filter(member => member.status === 1).length;
-});
 
-// 群聊详情弹窗相关
-const showGroupDetailPopup = ref(false);
-const groupDetailPopupPosition = ref({ x: 0, y: 0 });
-const groupDetailPopupRef = ref(null);
-
-const router = useRouter();
-
-// 用户详情弹窗相关
-const showUserDetailPopup = ref(false);
-const userDetailPopupPosition = ref({ x: 0, y: 0 });
-const userDetail = ref({});
-const userDetailLoading = ref(false);
-
-// 新增：弹窗的响应式控制变量
-const showRightKeyPop = ref(false)
-const rightKeyPopPosition = ref({ x: 0, y: 0 })
-const rightKeyPopMsg = ref(null)
-const isCalculatingPosition = ref(false);
-const rightKeyPopRef = ref(null)
-
-// 从父组件props获取好友列表
 const props = defineProps({
   friendList: {
     type: Array,
@@ -362,7 +413,69 @@ const props = defineProps({
   }
 });
 
-const connectionStatus = ref('connected');
+const connectionStatus = ref('connected'); // WebSocket连接状态
+
+// 文件和图片上传相关
+const imageInput = ref(null); // 图片上传input引用
+const fileInput = ref(null); // 文件上传input引用
+const selectedImages = ref([]); // 多图文件数组
+const imagePreviewUrls = ref([]); // 图片预览URL列表
+const filePreviewList = ref([]); // 文件预览列表
+const showCopySuccess = ref(false); // 复制成功提示显示状态
+
+// 群聊详情弹窗
+const showGroupDetailPopup = ref(false); // 群聊详情弹窗显示状态
+const groupDetailPopupPosition = ref({ x: 0, y: 0 }); // 群聊详情弹窗位置
+const groupDetailPopupRef = ref(null); // 群聊详情弹窗DOM引用
+
+// 用户详情弹窗
+const showUserDetailPopup = ref(false); // 用户详情弹窗显示状态
+const userDetailPopupPosition = ref({ x: 0, y: 0 }); // 用户详情弹窗位置
+const userDetail = ref({}); // 用户详情数据
+const userDetailLoading = ref(false); // 用户详情加载状态
+
+// 右键菜单
+const showRightKeyPop = ref(false); // 右键菜单显示状态
+const rightKeyPopPosition = ref({ x: 0, y: 0 }); // 右键菜单位置
+const rightKeyPopMsg = ref(null); // 右键菜单关联的消息
+const isCalculatingPosition = ref(false); // 右键菜单位置计算中状态
+const rightKeyPopRef = ref(null); // 右键菜单DOM引用
+
+// 群聊抽屉
+const showGroupDrawer = ref(false); // 群聊抽屉显示状态
+const selectedGroupForDrawer = ref(null); // 抽屉中选中的群聊
+const memberDrawerRef = ref(null); // 成员抽屉DOM引用
+const memberDrawerBtnRef = ref(null); // 成员抽屉按钮DOM引用
+// #endregion
+
+// #region 计算属性
+/**
+ * 在线成员数量
+ */
+const onlineCount = computed(() => {
+  return (currentGroup.value.members || []).filter(member => member.status === 1).length;
+});
+// #endregion
+
+// #region 工具函数
+/**
+ * 同步WebSocket连接状态
+ */
+const syncWebSocketState = () => {
+  if (userStore.chatWS && userStore.chatWS.waitConnLoading) {
+    // 直接监听WebSocket的waitConnLoading状态
+    watch(() => userStore.chatWS.waitConnLoading.value, (newValue) => {
+      console.log('WebSocket waitConnLoading状态变化:', newValue);
+      if (!newValue) {
+        // waitConnLoading为false时，关闭重连动画
+        setTimeout(() => {
+          isReconnecting.value = false;
+          console.log('根据WebSocket状态关闭重连动画');
+        }, 500);
+      }
+    }, { immediate: true });
+  }
+};
 
 function showGroupDetailPopupHandler(event) {
   const rect = event.target.getBoundingClientRect();
@@ -378,14 +491,9 @@ function showGroupDetailPopupHandler(event) {
     }
   });
 }
+// #endregion
 
 
-const showGroupDrawer = ref(false);
-
-const memberDrawerRef = ref(null);
-const memberDrawerBtnRef = ref(null);
-const selectedGroupForDrawer = ref(null);
-// 处理群聊more按钮点击
 const handleGroupMoreClick = async (group, event) => {
 
 let detail = {};
@@ -413,8 +521,8 @@ try {
       avatar: m.avatar,
       role: m.role,
       status: m.status,
-      level: calculateLevel(m.exp || m.exep || 0),
-      exp: m.exp || m.exep || 0,
+      level: calculateLevel(m.exp || 0),
+      exp: m.exp || 0,
       joinGroupTime: m.joinGroupTime,
       createTime: m.createTime,
       isFriend: m.isFriend || false
@@ -486,18 +594,31 @@ watch(
 
 onMounted(() => {
   resetAndFetch();
+  // 启动WebSocket状态同步
+  syncWebSocketState();
   // 添加emoji点击外部关闭事件监听器
   document.addEventListener('click', handleClickOutside);
   emitter.on('group-message', handleGroupMessage);
+  // 监听撤回消息事件
+  emitter.on('message-recall', handleMessageRecall);
   // 监听WebSocket连接成功事件，关闭loading动画
   emitter.on('websocket-connected', () => {
-    console.log('GroupChat收到WebSocket连接成功事件，关闭loading动画');
-    isReconnecting.value = false;
-    connectionStatus.value = 'connected';
+    console.log('GroupChat收到WebSocket连接成功事件，关闭所有动画');
+    // 确保所有重连相关的状态都被重置
+    setTimeout(() => {
+      isReconnecting.value = false;
+      connectionStatus.value = 'connected';
+      console.log('重连动画状态已重置');
+    }, 500); // 稍微延迟确保状态同步
   });
+  
   emitter.on('websocket-reconnect', () => {
     console.log('GroupChat收到WebSocket重连事件，显示重连弹窗');
     connectionStatus.value = 'disconnected';
+    // 如果不是手动重连，则不显示重连动画
+    if (!isReconnecting.value) {
+      console.log('自动重连失败，显示重连弹窗');
+    }
   });
 });
 
@@ -505,6 +626,7 @@ onUnmounted(() => {
   // 移除emoji点击外部关闭事件监听器
   document.removeEventListener('click', handleClickOutside);
   emitter.off('group-message');
+  emitter.off('message-recall');
   emitter.off('websocket-connected');
   emitter.off('websocket-reconnect');
   // Disconnect the observer
@@ -513,17 +635,35 @@ onUnmounted(() => {
   }
 });
 
-// 连接成功后动画未及时关闭的问题
+// 手动重连函数
 const handleManualReconnect = async () => {
   try {
+    console.log('开始手动重连...');
     isReconnecting.value = true;
     connectionStatus.value = 'connecting';
+    
+    // 等待一下再调用重连，让用户看到动画
     setTimeout(async () => {
-      await userStore.manualReconnect();
+      try {
+        await userStore.manualReconnect();
+        console.log('手动重连成功');
+        // 重连成功后等待一下再关闭动画
+        setTimeout(() => {
+          isReconnecting.value = false;
+          connectionStatus.value = 'connected';
+        }, 1000);
+      } catch (error) {
+        console.error('手动重连失败:', error);
+        isReconnecting.value = false;
+        connectionStatus.value = 'disconnected';
+        ArcMessage.error('手动重连失败，请稍后再试');
+      }
     }, 1500);
   } catch (error) {
+    console.error('手动重连初始化失败:', error);
     isReconnecting.value = false;
-    ElMessage.error('手动重连失败');
+    connectionStatus.value = 'disconnected';
+    ArcMessage.error('重连初始化失败');
   }
 };
 
@@ -571,7 +711,7 @@ const loadGroupMessages = async (reset = false) => {
           roomId: message.roomId,
           time: message.sendTime,
           type: message.type,
-          text: getMessageText(message),
+          body: message.body,
           fromUid,
           side: fromUid === userStore.userInfo.uid ? 'right' : 'left',
           avatar: member.avatar || msg.fromUser?.avatar || '',
@@ -641,7 +781,7 @@ watch(
             avatar: m.avatar,
             role: m.role,
             status: m.status,
-            level: calculateLevel(m.exp || m.exep || 0),
+            level: calculateLevel(m.exp || 0),
             joinGroupTime: m.joinGroupTime
           }));
           currentGroup.value.members = members;
@@ -709,7 +849,6 @@ onBeforeUnmount(() => {
   emitter.off('add-friend');
 
 });
-// 修改getMessageText逻辑 消息返回对象
 const getMessageText = (message) => {
   if (!message) return '';
   switch (message.type) {
@@ -720,7 +859,9 @@ const getMessageText = (message) => {
         return message.body.content || message.body.text || JSON.stringify(message.body);
       }
     case 2: // RECALL
-      return '[消息已撤回]';
+      if (message.body && typeof message.body === 'string') {
+        return message.body;
+      } 
     case 3: // IMG
       // body.url, body.width, body.height
       return message.body && message.body.url
@@ -747,16 +888,35 @@ const getMessageText = (message) => {
 
 const sendMessage = async () => {
   if (!inputValue.value.trim() && !filePreviewList.value.length) return;
+  
   // 1. 先发送文本消息（如有）
   if (inputValue.value.trim()) {
+    // 添加文本加载气泡
+    const loadingId = Date.now();
+    const textContent = inputValue.value;
+    loadingMessages.value.push({
+      id: loadingId,
+      type: 'text',
+      content: textContent,
+      status: 'sending'
+    });
+    
+    // 清空输入框并滚动到底部
+    inputValue.value = '';
+    nextTick(scrollToBottom);
+    
     const params = {
       roomId: currentGroup.value.roomId,
       msgType: 1, // 文本
-      body: { content: inputValue.value }
+      body: { content: textContent }
     };
+    
     try {
       const res = await sendMsg(params);
       if (res.code === 200 && res.data) {
+        // 移除加载气泡
+        loadingMessages.value = loadingMessages.value.filter(msg => msg.id !== loadingId);
+        
         // 解析返回的消息结构
         const msg = res.data;
         const fromUid = msg.fromUser?.uid;
@@ -768,7 +928,7 @@ const sendMessage = async () => {
           roomId: message.roomId,
           time: message.sendTime,
           type: message.type,
-          text: getMessageText(message),
+          body: message.body, // 直接使用原始的message.body
           fromUid,
           side: fromUid === userStore.userInfo.uid ? 'right' : 'left',
           avatar: member.avatar || msg.fromUser?.avatar || '',
@@ -778,16 +938,79 @@ const sendMessage = async () => {
           isVisible: true // 新发送的消息立即可见
         };
         messages.value.push(newMsg);
-        inputValue.value = '';
         nextTick(scrollToBottom);
       }
-    } catch (e) {
-      // 错误处理
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      // 标记消息为失败状态
+      const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+      if (failedMsgIndex !== -1) {
+        loadingMessages.value[failedMsgIndex].status = 'failed';
+        loadingMessages.value[failedMsgIndex].error = error.message || '发送失败';
+        loadingMessages.value[failedMsgIndex].originalParams = params;
+      }
+      // 显示失败提示
+      ElMessage.error('消息发送失败，请点击重发');
     }
   }
+  
   // 2. 再上传并发送所有待发送文件
   if (filePreviewList.value.length) {
     await sendFileMessages();
+  }
+}
+
+// 重发消息函数
+const retryMessage = async (loadingMsg) => {
+  if (!loadingMsg.originalParams) {
+    ElMessage.error('无法重发消息，缺少原始参数');
+    return;
+  }
+  
+  // 更新状态为发送中
+  const msgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingMsg.id);
+  if (msgIndex !== -1) {
+    loadingMessages.value[msgIndex].status = 'sending';
+  }
+  
+  try {
+    console.log('重发消息:', loadingMsg.originalParams);
+    const res = await sendMsg(loadingMsg.originalParams);
+    if (res.code === 200 && res.data) {
+      // 移除加载气泡
+      loadingMessages.value = loadingMessages.value.filter(msg => msg.id !== loadingMsg.id);
+      
+      // 添加正常消息
+      const msg = res.data;
+      const fromUid = msg.fromUser?.uid;
+      const message = msg.message || {};
+      const member = memberMap.value[fromUid] || {};
+      const newMsg = {
+        id: message.id,
+        roomId: message.roomId,
+        time: message.sendTime,
+        type: message.type,
+        body: message.body,
+        fromUid,
+        side: fromUid === userStore.userInfo.uid ? 'right' : 'left',
+        avatar: member.avatar || msg.fromUser?.avatar || '',
+        username: member.name || msg.fromUser?.username || '群成员',
+        role: member.role,
+        status: member.status,
+        isVisible: true
+      };
+      messages.value.push(newMsg);
+      nextTick(scrollToBottom);
+      ElMessage.success('消息重发成功');
+    }
+  } catch (error) {
+    console.error('重发消息失败:', error);
+    // 恢复失败状态
+    if (msgIndex !== -1) {
+      loadingMessages.value[msgIndex].status = 'failed';
+      loadingMessages.value[msgIndex].error = error.message || '重发失败';
+    }
+    ElMessage.error('消息重发失败');
   }
 }
 
@@ -861,7 +1084,7 @@ function handleAvatarClick(event, msg) {
           id: u.id,
           name: u.username,
           avatar: u.avatar,
-          level: calculateLevel(u.exep),
+          level: calculateLevel(u.exp),
           createTime: u.createTime,
           status: u.status,
           isFriend
@@ -908,7 +1131,7 @@ function handleMemberClick(event, member) {
           id: u.id,
           name: u.username,
           avatar: u.avatar,
-          level: calculateLevel(u.exep),
+          level: calculateLevel(u.exp),
           createTime: u.createTime,
           status: u.status,
           isFriend
@@ -959,7 +1182,7 @@ function handleGroupMessage(data) {
     roomId: message.roomId,
     time: message.sendTime,
     type: message.type,
-    text: getMessageText(message),
+    body: message.body, // 直接使用原始的message.body
     fromUid,
     side: fromUid === userStore.userInfo.uid ? 'right' : 'left',
     avatar: member.avatar || data.fromUser?.avatar || '',
@@ -979,10 +1202,56 @@ function handleGroupMessage(data) {
   });
 }
 
-const imageInput = ref(null);
-const selectedImages = ref([]); // 多图文件数组
-const imagePreviewUrls = ref([]); // 多图本地url数组
+// 处理撤回消息的WebSocket推送
+function handleMessageRecall(data) {
+  console.log('收到撤回消息推送:', data);
+  
+  if (!data || !data.msgId || !data.roomId) {
+    console.warn('撤回消息数据不完整:', data);
+    return;
+  }
+  
+  // 只处理当前群聊的撤回消息
+  if (String(data.roomId) !== String(currentGroup.value.roomId)) {
+    console.log('撤回消息不属于当前群聊，忽略');
+    return;
+  }
+  
+  const messageIndex = messages.value.findIndex(msg => msg.id === data.msgId);
+  if (messageIndex !== -1) {
+    const originalMsg = messages.value[messageIndex];
+    const recallUid = data.recallUid;
+    
+    let recallText;
+    if (recallUid !== originalMsg.fromUid) {
+      // 管理员撤回成员消息
+      const recallUser = memberMap.value[recallUid];
+      const recallUsername = recallUser?.name || '管理员';
+      recallText = `管理员"${recallUsername}"撤回了一条成员消息`;
+    } else {
+      // 用户撤回自己的消息
+      const username = originalMsg.username || '群成员';
+      recallText = `"${username}"撤回了一条消息`;
+    }
+    
+    // 更新消息内容为撤回状态
+    messages.value[messageIndex] = {
+      ...messages.value[messageIndex],
+      type: 2, // 撤回消息类型
+      body: recallText, // 设置和后端数据库一致的撤回文本
+      isRecalled: true
+    };
 
+  } else {
+    console.warn('未找到要撤回的消息:', data.msgId);
+  }
+}
+
+
+// #region 图片上传处理
+/**
+ * 触发图片上传input点击
+ */
 function triggerImageInput() {
   imageInput.value && imageInput.value.click();
 }
@@ -996,26 +1265,49 @@ function onImageSelected(e) {
   e.target.value = '';
 }
 
-// 发送多张图片消息逻辑
+/**
+ * 发送多张图片消息
+ */
 async function sendImageMessage() {
   if (!selectedImages.value.length) return;
   for (let i = 0; i < selectedImages.value.length; i++) {
     const file = selectedImages.value[i];
     const url = imagePreviewUrls.value[i];
+    
+    // 添加图片加载气泡
+    const loadingId = Date.now() + i; // 避免ID冲突
+    loadingMessages.value.push({
+      id: loadingId,
+      type: 'image',
+      previewUrl: url,
+      file: file,
+      status: 'sending'
+    });
+    
+    nextTick(scrollToBottom);
+    
     // 获取图片宽高
     const img = new window.Image();
     img.src = url;
     await new Promise(resolve => { img.onload = resolve; });
     const width = img.width;
     const height = img.height;
-    // 上传
+    
     try {
+      // 上传图片
       const uploadRes = await uploadImageFile(file);
       if (!uploadRes || !uploadRes.url) {
+        // 标记为失败状态
+        const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+        if (failedMsgIndex !== -1) {
+          loadingMessages.value[failedMsgIndex].status = 'failed';
+          loadingMessages.value[failedMsgIndex].error = '图片上传失败';
+        }
         ElMessage.error('图片上传失败');
         continue;
       }
-      // 发送
+      
+      // 发送消息
       const params = {
         roomId: currentGroup.value.roomId,
         msgType: 3,
@@ -1026,9 +1318,19 @@ async function sendImageMessage() {
           height
         }
       };
+      
+      // 保存原始参数用于重发
+      const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+      if (failedMsgIndex !== -1) {
+        loadingMessages.value[failedMsgIndex].originalParams = params;
+      }
+      
       const res = await sendMsg(params);
       if (res.code === 200 && res.data) {
-        // 立即添加到消息列表进行渲染
+        // 移除加载气泡
+        loadingMessages.value = loadingMessages.value.filter(msg => msg.id !== loadingId);
+        
+        // 添加正常消息
         const msg = res.data;
         const fromUid = msg.fromUser?.uid;
         const message = msg.message || {};
@@ -1038,21 +1340,27 @@ async function sendImageMessage() {
           roomId: message.roomId,
           time: message.sendTime,
           type: message.type,
-          text: getMessageText(message),
+          body: message.body,
           fromUid,
           side: fromUid === userStore.userInfo.uid ? 'right' : 'left',
           avatar: member.avatar || msg.fromUser?.avatar || '',
           username: member.name || msg.fromUser?.username || '群成员',
           role: member.role,
           status: member.status,
-          isVisible: true // 新发送的消息立即可见
+          isVisible: true
         };
         messages.value.push(newMsg);
         nextTick(scrollToBottom);
       }
-    } catch (e) {
-      ElMessage.error('图片上传失败');
-      continue;
+    } catch (error) {
+      console.error('图片发送失败:', error);
+      // 标记为失败状态
+      const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+      if (failedMsgIndex !== -1) {
+        loadingMessages.value[failedMsgIndex].status = 'failed';
+        loadingMessages.value[failedMsgIndex].error = error.message || '图片发送失败';
+      }
+      ElMessage.error('图片发送失败，请点击重发');
     }
   }
   // 清空
@@ -1061,9 +1369,10 @@ async function sendImageMessage() {
 }
 
 // 处理各种文件消息
-const fileInput = ref(null);
-const filePreviewList = ref([]); // { file, url, isImage, fileName, fileTypeClass, fileIcon, previewKey }
-
+// #region 文件上传处理
+/**
+ * 触发文件上传input点击
+ */
 function triggerFileInput() {
   fileInput.value && fileInput.value.click();
 }
@@ -1124,27 +1433,62 @@ function formatFileSize(size) {
 }
 
 async function sendFileMessages() {
-  for (const preview of filePreviewList.value) {
-    // 1. 上传文件
-    const uploadRes = await uploadImageFile(preview.file);
-    if (!uploadRes || !uploadRes.url) {
-      ElMessage.error('文件上传失败');
-      continue;
-    }
-    // 2. 构造消息体
-    const params = {
-      roomId: currentGroup.value.roomId,
-      msgType: 4, // 文件
-      body: {
-        url: uploadRes.url,
-        size: preview.file.size,
-        fileName: preview.file.name
-      }
-    };
+  for (let i = 0; i < filePreviewList.value.length; i++) {
+    const preview = filePreviewList.value[i];
+    
+    // 添加文件加载气泡
+    const loadingId = Date.now() + i; // 避免ID冲突
+    const ext = preview.file.name.split('.').pop().toLowerCase();
+    loadingMessages.value.push({
+      id: loadingId,
+      type: 'file',
+      fileName: preview.file.name,
+      fileSize: preview.file.size,
+      fileExt: ext,
+      file: preview.file,
+      status: 'sending'
+    });
+    
+    nextTick(scrollToBottom);
+      //  // 模拟网络延迟 5 秒
+      //  await new Promise(resolve => setTimeout(resolve, 5000));
     try {
+      // 1. 上传文件
+      const uploadRes = await uploadImageFile(preview.file);
+      if (!uploadRes || !uploadRes.url) {
+        // 标记为失败状态
+        const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+        if (failedMsgIndex !== -1) {
+          loadingMessages.value[failedMsgIndex].status = 'failed';
+          loadingMessages.value[failedMsgIndex].error = '文件上传失败';
+        }
+        ElMessage.error('文件上传失败');
+        continue;
+      }
+      
+      // 2. 构造消息体
+      const params = {
+        roomId: currentGroup.value.roomId,
+        msgType: 4, // 文件
+        body: {
+          url: uploadRes.url,
+          size: preview.file.size,
+          fileName: preview.file.name
+        }
+      };
+      
+      // 保存原始参数用于重发
+      const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+      if (failedMsgIndex !== -1) {
+        loadingMessages.value[failedMsgIndex].originalParams = params;
+      }
+      
       const res = await sendMsg(params);
       if (res.code === 200 && res.data) {
-        // 立即添加到消息列表进行渲染
+        // 移除加载气泡
+        loadingMessages.value = loadingMessages.value.filter(msg => msg.id !== loadingId);
+        
+        // 添加正常消息
         const msg = res.data;
         const fromUid = msg.fromUser?.uid;
         const message = msg.message || {};
@@ -1154,7 +1498,7 @@ async function sendFileMessages() {
           roomId: message.roomId,
           time: message.sendTime,
           type: message.type,
-          text: getMessageText(message),
+          body: message.body, // 直接使用原始的message.body
           fromUid,
           side: fromUid === userStore.userInfo.uid ? 'right' : 'left',
           avatar: member.avatar || msg.fromUser?.avatar || '',
@@ -1166,8 +1510,15 @@ async function sendFileMessages() {
         messages.value.push(newMsg);
         nextTick(scrollToBottom);
       }
-    } catch (e) {
-      ElMessage.error('文件发送失败');
+    } catch (error) {
+      console.error('文件发送失败:', error);
+      // 标记为失败状态
+      const failedMsgIndex = loadingMessages.value.findIndex(msg => msg.id === loadingId);
+      if (failedMsgIndex !== -1) {
+        loadingMessages.value[failedMsgIndex].status = 'failed';
+        loadingMessages.value[failedMsgIndex].error = error.message || '文件发送失败';
+      }
+      ElMessage.error('文件发送失败，请点击重发');
     }
   }
   filePreviewList.value = [];
@@ -1202,14 +1553,17 @@ function handleRightClick(msg, event) {
       separatorAfter: false
     }
   ]
-  if (msg.side === 'right') {
+  
+  // 撤回权限检查
+  const canRecall = checkRecallPermission(msg);
+  if (canRecall) {
     baseItems.splice(2, 0, {
       key: 'recall',
       label: '撤回',
       icon: '<svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10" opacity=".5"/><path fill="currentColor" d="M10.564 7.461a.75.75 0 1 1 .871 1.22l-3.221 2.302a1.25 1.25 0 0 0 0 2.034l3.221 2.301a.75.75 0 1 1-.871 1.22l-3.222-2.3a2.75 2.75 0 0 1 0-4.476z"/><path fill="currentColor" d="M16.5 15.132V8.869a1 1 0 0 0-1.555-.832l-4.697 3.131a1 1 0 0 0 0 1.664l4.697 3.132a1 1 0 0 0 1.555-.832"/></svg>',
       danger: true,
       checked: false,
-      onClick: () => { console.log('recall') },
+      onClick: () => { handleRecallMessage(msg) },
       separatorAfter: true
     })
   }
@@ -1275,16 +1629,56 @@ onBeforeUnmount(() => {
   document.removeEventListener('mousedown', handleClickOutsideMemberDrawer);
 })
 
-const showCopySuccess = ref(false)
+// #region 消息权限检查
+
+function checkRecallPermission(msg) {
+  const currentUserId = userStore.userInfo.uid;
+  const currentUserMember = memberMap.value[currentUserId];
+  const msgAuthorMember = memberMap.value[msg.fromUid];
+  
+  if (!currentUserMember) return false;
+  
+  // 如果是自己的消息，都可以撤回
+  if (msg.fromUid === currentUserId) return true;
+  
+  // 群主可以撤回所有人的消息
+  if (currentUserMember.role === 1) return true;
+  
+  // 管理员可以撤回普通成员的消息，但不能撤回群主和其他管理员的消息
+  if (currentUserMember.role === 2) {
+    return msgAuthorMember && msgAuthorMember.role === 3; // 只能撤回普通成员(role=3)的消息
+  }
+  
+  // 普通成员只能撤回自己的消息
+  return false;
+}
+
+// 处理撤回消息
+async function handleRecallMessage(msg) {
+  try {
+    await recallMsg({
+      msgId: msg.id,
+      roomId: msg.roomId
+    });
+    
+    ArcMessage.success('消息已撤回');
+    
+    // 关闭右键菜单
+    showRightKeyPop.value = false;
+  } catch (error) {
+    console.error('撤回消息失败:', error);
+    ArcMessage.error('撤回消息失败');
+  }
+}
 
 function handleCopy(msg) {
   let text = ''
   if (msg.type === 1) { // 文本
-    text = typeof msg.text === 'string' ? msg.text : ''
-  } else if (msg.type === 4 && msg.text?.fileName) {
-    text = msg.text.url
-  } else if (msg.type === 3 && msg.text?.url) {
-    text = msg.text.url
+    text = getMessageText(msg) || ''
+  } else if (msg.type === 4 && msg.body?.fileName) {
+    text = msg.body.url
+  } else if (msg.type === 3 && msg.body?.url) {
+    text = msg.body.url
   } else {
     text = '[暂不支持复制该类型]'
   }
@@ -1942,6 +2336,7 @@ body.dark-theme .ws-reconnect-mask {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 .dark-mode .file-msg-name {
@@ -2046,13 +2441,15 @@ body.dark-theme .ws-reconnect-mask {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 
 .file-size-block {
   font-size: 10px;
   color: #888;
-  margin-top: 1px;
+  line-height: 1;
+  margin-top: 2px;
 }
 
 .remove-btn-card {
@@ -2101,6 +2498,144 @@ body.dark-theme .ws-reconnect-mask {
   justify-content: center;
 }
 
+/* 撤回消息样式 */
+.recall-message-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 8px 0;
+  padding: 0 20px;
+}
 
+.recall-message-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(63, 63, 66, 0.25);
+  border-radius: 12px;
+  font-size: 13px;
+  max-width: 300px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.recall-icon {
+  color: #ffffff;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.recall-text {
+  font-size: 13px;
+  color: #838080;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 暗色模式下的撤回消息样式 */
+body.dark .recall-message-content {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #aaa;
+}
+
+body.dark .recall-icon {
+  color: #aaa;
+}
+
+body.dark .recall-text {
+  color: #aaa;
+}
+
+/* 悬停效果 */
+.recall-message-content:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+body.dark .recall-message-content:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* 消息容器样式 */
+.message-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* 发送中的消息样式 */
+.message-sending {
+  position: relative;
+  opacity: 0.8;
+}
+
+/* 右下角加载动画 */
+.message-loading-indicator {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* 小型加载动画 */
+.loading-spinner-mini {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #e0e0e0;
+  border-top: 1.5px solid #1976d2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 重发按钮样式 */
+.message-retry-btn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.message-retry-btn:hover {
+  background: #d32f2f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.retry-icon {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
 
 </style>
+

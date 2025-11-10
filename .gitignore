@@ -1,5 +1,46 @@
+# ============================================
+# Dependencies & Package Managers
+# ============================================
+node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# ============================================
+# Build Output & Distribution
+# ============================================
+dist/
+dist-ssr/
+build/
+.cache/
+*.tsbuildinfo
+
+# ============================================
+# Vite Specific
+# ============================================
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ============================================
+# Environment Variables & Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging
+
+# ============================================
 # Logs
-logs
+# ============================================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,24 +48,164 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.DS_Store
-dist
-dist-ssr
-coverage
-*.local
-
+# ============================================
+# Testing & Coverage
+# ============================================
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
 /cypress/videos/
 /cypress/screenshots/
 
-# Editor directories and files
+# ============================================
+# Editor & IDE
+# ============================================
+# VSCode
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
-.idea
+*.code-workspace
+
+# JetBrains IDEs (WebStorm, IntelliJ, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Visual Studio
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
+# ============================================
+# Operating System Files
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Temporary Files & Misc
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.cache
+*.local
+*.pid
+*.seed
+*.pid.lock
+.npm
+.eslintcache
+.stylelintcache
+.node_repl_history
+*.tgz
+
+# ============================================
+# Optional npm cache directory
+# ============================================
+.npm/
+
+# ============================================
+# Optional eslint cache
+# ============================================
+.eslintcache
+
+# ============================================
+# Optional stylelint cache
+# ============================================
+.stylelintcache
+
+# ============================================
+# TypeScript
+# ============================================
 *.tsbuildinfo
+.tscache/
+
+# ============================================
+# Debug & Profiling
+# ============================================
+.vscode-test
+npm-debug.log
+.DS_Store
+storybook-static/
+chromatic-build/
+
+# ============================================
+# Lock files (optional - choose one strategy)
+# ============================================
+# Uncomment if you want to ignore lock files
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ============================================
+# Project Specific
+# ============================================
+# Documentation files
+/doc/
+/docs/
+*.doc
+*.docx
+*.pdf
+*.ppt
+*.pptx
+*.xls
+*.xlsx
+
+# Add your project-specific ignores below
+# /public/uploads/
+# /src/config/local.js

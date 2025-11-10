@@ -125,8 +125,8 @@
   z-index: 1;
 }
 .time-divider {
-  background-color: rgba(0, 0, 0, 0.1);
   color: var(--text-color-secondary);
+  background-color: rgba(0, 0, 0, 0.1);
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 12px;

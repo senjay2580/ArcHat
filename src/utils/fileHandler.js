@@ -1,4 +1,4 @@
-import { fileUploadService } from '@/api/common/file';
+import { fileUploadService } from '@/api/file';
 
 /**
  * 上传图片文件

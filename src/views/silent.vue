@@ -33,44 +33,44 @@
   </div>
 </template>
 
-<script>
-import { ref, onMounted } from 'vue'
+<script setup>
+// #region 导入依赖
+// Vue核心
+import { ref, onMounted } from 'vue';
+// #endregion
 
-export default {
-  name: 'FogBackground',
-  setup() {
-    const fogParticles = ref([])
-    
-    // 生成随机迷雾粒子
-    const generateFogParticles = () => {
-      const particles = []
-      for (let i = 0; i < 20; i++) {
-        particles.push({
-          id: i,
-          x: Math.random() * 100,
-          y: Math.random() * 100,
-          delay: Math.random() * 10,
-          duration: 15 + Math.random() * 20,
-          scale: 0.5 + Math.random() * 1.5
-        })
-      }
-      fogParticles.value = particles
-    }
-    
-    onMounted(() => {
-      generateFogParticles()
-      
-      // 定期重新生成粒子位置
-      setInterval(() => {
-        generateFogParticles()
-      }, 30000)
-    })
-    
-    return {
-      fogParticles
-    }
+// #region 响应式数据
+const fogParticles = ref([]);
+// #endregion
+
+// #region 工具函数
+// 生成随机迷雾粒子
+const generateFogParticles = () => {
+  const particles = [];
+  for (let i = 0; i < 20; i++) {
+    particles.push({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 10,
+      duration: 15 + Math.random() * 20,
+      scale: 0.5 + Math.random() * 1.5
+    });
   }
-}
+  fogParticles.value = particles;
+};
+// #endregion
+
+// #region 生命周期钩子
+onMounted(() => {
+  generateFogParticles();
+  
+  // 定期重新生成粒子位置
+  setInterval(() => {
+    generateFogParticles();
+  }, 30000);
+});
+// #endregion
 </script>
 
 <style scoped>
@@ -261,3 +261,4 @@ export default {
   }
 }
 </style>
+

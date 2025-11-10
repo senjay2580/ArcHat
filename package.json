@@ -4,21 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
     "@ckpack/vue-color": "^1.6.0",
     "@element-plus/icons-vue": "^2.3.1",
     "@floating-ui/vue": "^1.1.7",
     "@formkit/drag-and-drop": "^0.5.3",
-    "@highlightjs/vue-plugin": "^2.1.0",
-    "@iconify-icons/carbon": "^1.2.20",
-    "@iconify-icons/material-symbols": "^1.2.58",
-    "@iconify/json": "^2.2.363",
-    "@iconify/utils": "^2.3.0",
-    "@iconify/vue": "^5.0.0",
     "@tiptap/extension-blockquote": "^3.0.7",
     "@tiptap/extension-code-block-lowlight": "^3.0.7",
     "@tiptap/extension-color": "^3.0.7",

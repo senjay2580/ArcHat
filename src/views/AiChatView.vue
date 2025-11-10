@@ -127,7 +127,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick, computed, onUnmounted } from 'vue'
+// ==================== 导入依赖 ====================
+// Vue核心
+import { ref, reactive, onMounted, nextTick, computed, onUnmounted } from 'vue';
+
+// Element Plus
+import { ElMessage } from 'element-plus';
 import { 
   User, 
   Plus,
@@ -139,22 +144,31 @@ import {
   QuestionFilled,
   EditPen,
   ArrowRight
-} from '@element-plus/icons-vue'
-import AichatInput from '@/components/AichatInput.vue'
-import dangerButton from '@/components/dangerButton.vue'
-import { aiChatStream } from '@/api/aichat'
-import { ElMessage } from 'element-plus'
-import hljs from 'highlight.js'
-import 'highlight.js/styles/github.css'
-// 导入 Vue 语言支持
-import 'highlight.js/lib/languages/javascript'
-import 'highlight.js/lib/languages/xml'
-import 'highlight.js/lib/languages/css'
-import { marked } from 'marked'
-import MarkdownIt from 'markdown-it'
-import { useUserInfoStore } from '@/stores/user'
+} from '@element-plus/icons-vue';
 
-const userStore = useUserInfoStore()
+// 本地组件
+import AichatInput from '@/components/misc/AichatInput.vue';
+import DangerButton from '@/components/form/DangerButton.vue';
+
+// API接口
+import { aiChatStream } from '@/api/aichat';
+
+// Stores
+import { useUserInfoStore } from '@/stores/user';
+
+// 第三方库
+import hljs from 'highlight.js';
+import 'highlight.js/styles/github.css';
+import 'highlight.js/lib/languages/javascript';
+import 'highlight.js/lib/languages/xml';
+import 'highlight.js/lib/languages/css';
+import { marked } from 'marked';
+import MarkdownIt from 'markdown-it';
+
+// ==================== Store ====================
+const userStore = useUserInfoStore();
+
+// ==================== Markdown渲染器配置 ====================
 const renderer = new marked.Renderer();
 
 renderer.code = function(code, infostring, escaped) {
@@ -224,24 +238,19 @@ marked.setOptions({
   xhtml: false
 })
 
-// 响应式数据
-const inputMessage = ref('')
-const messagesContainer = ref(null)
-const currentChatId = ref(1)
-const sidebarCollapsed = ref(true)
-const isTyping = ref(false)
-
-// 当前聊天标题
-const currentChatTitle = computed(() => {
-  const currentChat = chatHistory.value.find(chat => chat.id === currentChatId.value)
-  return currentChat ? currentChat.title : '新对话'
-})
+// #region 数据存储
+// 输入和UI状态
+const inputMessage = ref('') // 当前输入的消息内容
+const messagesContainer = ref(null) // 消息容器DOM引用
+const currentChatId = ref(1) // 当前选中的聊天ID
+const sidebarCollapsed = ref(true) // 侧边栏折叠状态
+const isTyping = ref(false) // AI正在打字状态
 
 // 消息列表
-const messages = ref([])
+const messages = ref([]) // 当前聊天的消息列表
 
 // 聊天历史
-const chatHistory = ref([
+const chatHistory = ref([ // 所有聊天会话列表
   { 
     id: 1, 
     title: '新对话', 
@@ -271,17 +280,37 @@ const chatHistory = ref([
     messages: []
   }
 ])
+// #endregion
 
-// 切换侧边栏
+// #region 计算属性
+/**
+ * 当前聊天标题
+ */
+const currentChatTitle = computed(() => {
+  const currentChat = chatHistory.value.find(chat => chat.id === currentChatId.value)
+  return currentChat ? currentChat.title : '新对话'
+})
+// #endregion
+
+// #region 界面控制
+/**
+ * 切换侧边栏折叠状态
+ */
 const toggleSidebar = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
-// 处理建议点击
+/**
+ * 处理建议点击
+ * @param {string} suggestionText - 建议文本
+ */
 const handleSuggestion = (suggestionText) => {
   inputMessage.value = suggestionText
   sendMessage()
 }
+// #endregion
+
+// #region 消息处理
 
 // 发送消息
 const sendMessage = async () => {
@@ -385,8 +414,9 @@ const sendMessage = async () => {
     scrollToBottom()
   }
 }
+// #endregion
 
-// 创建新对话
+// #region 聊天管理
 const createNewChat = () => {
   const newChatId = Date.now()
   const newChat = {
@@ -438,8 +468,9 @@ const updateChatHistory = (message) => {
     }
   }
 }
+// #endregion
 
-// 滚动到底部
+// #region 工具函数
 const scrollToBottom = () => {
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
@@ -538,7 +569,9 @@ function applyAppleStyleCodeBlocks() {
     }
   })
 }
+// #endregion
 
+// #region 生命周期钩子
 onMounted(() => {
   scrollToBottom()
   
@@ -596,6 +629,7 @@ window.copyCode = (codeBlockId) => {
     }
   }
 };
+// #endregion
 </script>
 
 <style scoped>
@@ -668,9 +702,6 @@ window.copyCode = (codeBlockId) => {
   flex: 1;
   overflow-y: auto;
   padding-right: 40px;
-}
-
-.messages-list {
 }
 
 .welcome-section {
@@ -1847,3 +1878,4 @@ window.copyCode = (codeBlockId) => {
 }
 
 </style>
+

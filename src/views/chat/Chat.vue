@@ -79,7 +79,7 @@
     <div class="message-input-container" ref="inputContainer">
       <!-- 通话按钮 -->
       <el-button class="input-icon-btn call-icon" circle @click="showCallOptions = true">
-        <Icon icon="material-symbols:call" width="24" color="#008bd0" />
+        <Phone :size="24" :stroke-width="2" style="color: #008bd0;" />
       </el-button>
       
 
@@ -166,50 +166,82 @@
 
 <script setup>
 // #region 导入依赖
-import { ref, onMounted, watch, onUnmounted, computed, nextTick, h } from 'vue';
-import EmojiPickerPopup from '@/components/EmojiPickerPopup.vue';
-import {
-  Microphone,
-  ChatRound,
-  Link,
-  Position,
-  Close
-} from '@element-plus/icons-vue';
-import 'emoji-picker-element';
-import { useDark } from '@vueuse/core';
-import UserDetailPopup from '@/components/UserDetailPopup.vue';
-import { ElMessage, ElNotification } from 'element-plus';
+import { ref, onMounted, watch, onUnmounted, onBeforeUnmount, computed, nextTick, h } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { useDark } from '@vueuse/core';
+import { ElMessage, ElNotification } from 'element-plus';
+import { Microphone, ChatRound, Link, Position, Close } from '@element-plus/icons-vue';
+import 'emoji-picker-element';
+import { Phone } from 'lucide-vue-next';
+
+import EmojiPickerPopup from '@/components/interaction/EmojiPickerPopup.vue';
+import UserDetailPopup from '@/components/business/UserDetailPopup.vue';
+import Loading from '@/components/feedback/loading.vue';
+import DangerButton from '@/components/form/DangerButton.vue';
+import WaitConnLoading from '@/components/feedback/WaitConnLoading.vue';
+import CallOptionsPopup from '@/components/business/CallOptionsPopup.vue';
+import CameraDeviceSelector from '@/components/business/CameraDeviceSelector.vue';
+
 import { checkFriend } from '@/api/friend';
 import { addPrivateRoom, checkPrivateRoom } from '@/api/room';
+import { getFriendMessageList } from '@/api/chatService';
 import ChatWebSocket from '@/api/chat.js';
+
 import { useUserInfoStore } from '@/stores/user';
 import { useContactStore } from '@/stores/contact';
-import { calculateLevel, linkify } from '@/utils/exp';
-import { getFriendMessageList } from '@/api/chatService';
-import emitter from '@/utils/eventBus';
-import Loading from '@/components/loading.vue';
-import clickSound from '@/assets/sounds/click.m4a'
-import dangerButton from '@/components/dangerButton.vue';
-import WaitConnLoading from '@/components/WaitConnLoading.vue';
-import CallOptionsPopup from '@/components/CallOptionsPopup.vue';
-import { Icon } from '@iconify/vue';
 import { useCallStore } from '@/stores/call.js';
 import { useVideoCallStore } from '@/stores/videoCall.js';
-import { onBeforeUnmount } from 'vue';
-import ArcMessage from '@/utils/ArcMessage'
-import CameraDeviceSelector from '@/components/CameraDeviceSelector.vue'
+
+import { calculateLevel, linkify } from '@/utils/exp';
+import emitter from '@/utils/eventBus';
+import ArcMessage from '@/utils/ArcMessage';
+import clickSound from '@/assets/sounds/click.m4a';
 // #endregion
 
-// #region 基础状态与引用
+// #region 基础状态
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserInfoStore();
 const contactStore = useContactStore();
+const callStore = useCallStore();
+const videoCallStore = useVideoCallStore();
+// #endregion
 
-// const inputValue = ref('');
-const inputValueMap = ref({});
-const currentInputValue = computed({
+// #region 数据存储
+// 聊天消息相关
+const messages = ref([]); // 当前聊天消息列表
+const inputValueMap = ref({}); // 各聊天室的输入内容缓存
+const hoverIdx = ref(null); // 消息悬浮索引
+
+// 表情选择器
+const showEmojiPicker = ref(false); // 表情选择器显示状态
+const recentEmojis = ref([]); // 最近使用的表情
+const emojiPanel = ref(null); // 表情选择器DOM引用
+const emojiButton = ref(null); // 表情按钮DOM引用
+
+// 通话相关
+const showCallOptions = ref(false); // 通话选项弹窗显示状态
+const showCameraSelector = ref(false); // 摄像头选择器显示状态
+const selectedCameraDeviceId = ref(''); // 已选摄像头设备ID
+const pendingVideoCallTarget = ref(null); // 待发起的视频通话目标用户
+
+// 用户详情
+const showUserDetail = ref(false); // 用户详情弹窗显示状态
+const selectedUser = ref({ // 选中查看的用户信息
+  id: '',
+  name: '',
+  avatar: '',
+  level: '',
+  status: '',
+  createTime: ''
+});
+const userDetailPosition = ref({ x: 0, y: 0 }); // 用户详情弹窗位置
+
+// UI状态
+const isReconnecting = ref(false); // WebSocket重连中标识
+const isDarkMode = useDark(); // 暗黑模式状态
+const inputContainer = ref(null); // 输入框容器DOM引用
+const currentInputValue = computed({ // 当前聊天室输入内容（可读写）
   get() {
     return inputValueMap.value[currentChat.value.roomId] || '';
   },
@@ -217,63 +249,8 @@ const currentInputValue = computed({
     inputValueMap.value[currentChat.value.roomId] = val;
   }
 });
-const messages = ref([]);
-const showEmojiPicker = ref(false);
-const recentEmojis = ref([]);
-const isDarkMode = useDark();
-const hoverIdx = ref(null);
-const isReconnecting = ref(false);
-const emojiPanel = ref(null);
-const emojiButton = ref(null);
-const inputContainer = ref(null);
 
-// 通话相关状态
-const showCallOptions = ref(false);
-const callStore = useCallStore();
-const videoCallStore = useVideoCallStore();
-
-// 摄像头设备选择相关状态
-const showCameraSelector = ref(false);
-const selectedCameraDeviceId = ref('');
-const pendingVideoCallTarget = ref(null);
-function onRecallMessage(msg) {
-  // TODO: 撤回逻辑
-  ElMessage.info('撤回功能开发中');
-}
-// #endregion
-
-// #region 用户详情相关
-const showUserDetail = ref(false);
-const selectedUser = ref({
-  id: '',
-  name: '',
-  avatar: '',
-  level: '',
-  status: '',
-  createTime: '',
-});
-const userDetailPosition = ref({ x: 0, y: 0 });
-// #endregion
-
-const handleClickOutside = (e) => {
-  // 如果 emoji 面板不存在，直接返回
-  if (!showEmojiPicker.value) return;
-  
-  // 检查点击目标是否在 emoji 面板内
-  if (emojiPanel.value && emojiPanel.value.$el && emojiPanel.value.$el.contains(event.target)) {
-      return;
-    }
-  
-  // 检查点击目标是否在底部输入控制栏内（包括所有按钮和输入框）
-  if (inputContainer.value && inputContainer.value.contains(e.target)) {
-    return;
-  }
-  
-  // 如果点击在面板和输入控制栏之外，关闭 emoji 选择器
-  showEmojiPicker.value = false;
-}
-
-// #region 当前聊天对象信息
+// 当前聊天对象信息
 const currentChat = ref({
   id: '',
   name: '',
@@ -283,25 +260,50 @@ const currentChat = ref({
   level: '',
   createTime: ''
 });
+
+// 消息输入与DOM引用
+const message = ref(''); // 当前输入的消息内容
+const messagesContainer = ref(null); // 消息列表容器DOM引用
+const messageInput = ref(null); // 输入框DOM引用
+
+// WebSocket连接
+const chatWS = computed(() => userStore.chatWS); // WebSocket实例
+const connectionStatus = ref('connected'); // 连接状态: connected/disconnected/connecting
+
+// 音频相关
+const isLoading = ref(false); // 加载状态
+const audioContext = new (window.AudioContext || window.webkitAudioContext)(); // 音频上下文
+let messageSound = null; // 消息提示音实例
 // #endregion
 
-// #region 消息相关
-const message = ref('');
-const messagesContainer = ref(null);
-const messageInput = ref(null);
+// #region 计算属性
+// currentInputValue已在数据存储区域定义
 // #endregion
 
-// #region WebSocket 相关
-const chatWS = computed(() => userStore.chatWS);
-const connectionStatus = ref('connected');
+// #region 工具函数
+/**
+ * 检查WebSocket连接状态
+ * @returns {boolean} 连接是否正常
+ */
+const checkWebSocketConnection = () => {
+  return chatWS.value && typeof chatWS.value.isConnected === 'function' && chatWS.value.isConnected();
+};
 
-// #endregion
+/**
+ * 滚动消息列表到底部
+ */
+const scrollToBottom = () => {
+  nextTick(() => {
+    const messageList = document.querySelector('.chat-message-list');
+    if (messageList) {
+      messageList.scrollTop = messageList.scrollHeight;
+    }
+  });
+};
 
-// #region 加载与音频相关
-const isLoading = ref(false);
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-let messageSound = null;
-
+/**
+ * 初始化消息提示音
+ */
 const initAudio = async () => {
   try {
     await audioContext.resume();
@@ -318,40 +320,51 @@ const initAudio = async () => {
       }, { once: true });
       messageSound.load();
     });
-    console.log('音频初始化成功');
   } catch (error) {
     console.error('音频初始化失败:', error);
   }
 };
 // #endregion
 
-// #region 工具函数
-const checkWebSocketConnection = () => {
-  return chatWS.value && typeof chatWS.value.isConnected === 'function' && chatWS.value.isConnected();
-};
-
-const scrollToBottom = () => {
-  nextTick(() => {
-    const messageList = document.querySelector('.chat-message-list');
-    if (messageList) {
-      messageList.scrollTop = messageList.scrollHeight;
-    }
-  });
+// #region 表情选择器处理
+/**
+ * 处理表情选择器外部点击事件
+ * @param {Event} e - 点击事件对象
+ */
+const handleClickOutside = (e) => {
+  if (!showEmojiPicker.value) return;
+  
+  if (emojiPanel.value && emojiPanel.value.$el && emojiPanel.value.$el.contains(event.target)) {
+    return;
+  }
+  
+  if (inputContainer.value && inputContainer.value.contains(e.target)) {
+    return;
+  }
+  
+  showEmojiPicker.value = false;
 };
 // #endregion
 
-// #region 聊天初始化与历史消息
+// #region 聊天初始化
+/**
+ * 检查并处理聊天会话
+ * @param {number} userId - 用户ID
+ */
 const checkAndHandleChat = async (userId) => {
   try {
+    // 检查是否为好友
     const friendRes = await checkFriend(userId);
     if (friendRes.code !== 200 || friendRes.data === false) {
       router.push('/404');
       return;
     }
+    // 检查私聊房间是否存在
     const roomRes = await checkPrivateRoom(userId);
     if (roomRes.code === 200 && roomRes.data === true) {
       return;
     } else {
+      // 创建新的私聊房间
       const createRes = await addPrivateRoom({ uid: userId });
       if (createRes.code === 200) {
         emitter.emit('refresh-friend-contact-list');
@@ -367,6 +380,10 @@ const checkAndHandleChat = async (userId) => {
   }
 };
 
+/**
+ * 获取历史消息
+ * @param {string} roomId - 房间ID
+ */
 const getHistoryMessages = async (roomId) => {
   try {
     isLoading.value = true;
@@ -418,7 +435,7 @@ watch(
           name: chatUser.username,
           avatar: chatUser.avatar,
           status: chatUser.status,
-          level: chatUser.exep ? calculateLevel(chatUser.exep) : '',
+          level: calculateLevel(chatUser.exp || 0),
           createTime: chatUser.createTime
         };
         if (chatUser.roomId) {
@@ -454,23 +471,15 @@ const currentChatStatus = computed(() => {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   emitter.on('websocket-reconnect', () => {
-    console.log('Chat收到WebSocket重连事件，显示重连弹窗');
     connectionStatus.value = 'disconnected';
   });
   emitter.on('websocket-connected', () => {
-    console.log('Chat收到WebSocket连接成功事件，关闭重连弹窗');
     isReconnecting.value = false;
     connectionStatus.value = 'connected';
   });
 
   emitter.on('chat-message', (messageData) => {
-    console.log('Chat 组件收到聊天消息:', messageData);
     const isInCurrentChat = currentChat.value && currentChat.value.id === messageData.fromUid;
-    console.log('当前聊天状态:', {
-      currentChatId: currentChat.value?.id,
-      messageFromUid: messageData.fromUid,
-      isInCurrentChat
-    });
     if (!isInCurrentChat) {
       const sender = contactStore.getContactById(messageData.fromUid);
       if (sender) {
@@ -526,6 +535,25 @@ onMounted(() => {
   document.addEventListener('click', handleUserInteraction);
   document.addEventListener('touchstart', handleUserInteraction);
   
+  // 监听用户上下线通知
+  emitter.on('user-status', (data) => {
+    if (!data || !Array.isArray(data.changeList)) return;
+    
+    // 更新联系人状态
+    contactStore.updateContactsStatus(data.changeList);
+    
+    // 如果当前聊天用户状态发生变化，触发响应式更新
+    if (currentChat.value && currentChat.value.id) {
+      const currentUserChange = data.changeList.find(change => change.uid === currentChat.value.id);
+      if (currentUserChange) {
+        console.log(`用户 ${currentChat.value.name} 状态更新:`, currentUserChange.activeStatus ? '在线' : '离线');
+        // 触发currentChatStatus计算属性重新计算
+        nextTick(() => {
+          // 强制触发响应式更新
+        });
+      }
+    }
+  });
 
 });
 
@@ -533,6 +561,7 @@ onUnmounted(() => {
   emitter.off('chat-message');
   emitter.off('websocket-reconnect');
   emitter.off('websocket-connected');
+  emitter.off('user-status'); // 清理用户状态事件监听
   document.removeEventListener('click', handleClickOutside)
   
 
@@ -656,7 +685,6 @@ const handleManualReconnect = async () => {
  * 发起语音通话
  */
 const startVoiceCall = async () => {
-  console.log('Chat.vue startVoiceCall 函数被调用');
   try {
     const targetUser = {
       id: currentChat.value.id,
@@ -684,7 +712,6 @@ const startVoiceCall = async () => {
  * 发起视频通话
  */
 const startVideoCall = async () => {
-  console.log('Chat.vue startVideoCall 函数被调用');
   try {
     // 构建目标用户信息
     const targetUser = {
@@ -692,11 +719,6 @@ const startVideoCall = async () => {
       name: currentChat.value.name,
       avatar: currentChat.value.avatar
     };
-    
-    console.log('🎥 准备发起视频通话:', {
-      targetUser,
-      currentUserId: userStore.userInfo?.uid
-    });
     
     // 检查videoCallStore是否可用
     if (!videoCallStore || typeof videoCallStore.startVideoCall !== 'function') {
@@ -706,7 +728,6 @@ const startVideoCall = async () => {
     }
     
     // 先显示摄像头设备选择器，让用户选择设备
-    console.log('📹 显示摄像头设备选择器');
     pendingVideoCallTarget.value = targetUser;
     showCallOptions.value = false; // 关闭通话选项弹窗
     showCameraSelector.value = true; // 显示摄像头选择器
@@ -719,8 +740,6 @@ const startVideoCall = async () => {
 
 // 摄像头设备选择回调方法
 const onCameraDeviceSelected = async (deviceInfo) => {
-  console.log('📹 用户选择了摄像头设备:', deviceInfo);
-  
   try {
     selectedCameraDeviceId.value = deviceInfo.deviceId;
     
@@ -731,11 +750,6 @@ const onCameraDeviceSelected = async (deviceInfo) => {
     }
     
     const targetUser = pendingVideoCallTarget.value;
-    console.log('🎥 使用选定设备发起视频通话:', {
-      device: deviceInfo.device?.label || '未知设备',
-      deviceId: deviceInfo.deviceId,
-      targetUser: targetUser.name
-    });
     
     // 发起视频通话，传入选定的设备ID
     const result = await videoCallStore.startVideoCall(targetUser, {
@@ -744,7 +758,6 @@ const onCameraDeviceSelected = async (deviceInfo) => {
     });
     
     if (result.success) {
-      console.log('✅ 视频通话发起成功');
       ArcMessage.success(`正在向 ${targetUser.name} 发起视频通话...`);
     } else {
       console.error('❌ 视频通话发起失败:', result.reason);
@@ -777,18 +790,18 @@ const onCameraDeviceSelected = async (deviceInfo) => {
 };
 
 const onCameraSelectionCanceled = () => {
-  console.log('❌ 用户取消了摄像头设备选择');
   pendingVideoCallTarget.value = null;
   ArcMessage.info('已取消视频通话');
 };
 // #endregion
 
+// #region 监听器
 watch(connectionStatus, (val) => {
-  console.log('Chat.vue 观察到 connectionStatus:', val);
   if (val === 'disconnected') {
     ArcMessage.error('WebSocket 连接已断开，请刷新或者点击重连');
   }
 });
+// #endregion
 </script>
 
 <style scoped src="@/assets/styles/chat.css"></style>
@@ -896,3 +909,4 @@ body.dark-theme .ws-reconnect-mask {
 
 }
 </style>
+

@@ -1,7 +1,7 @@
 import { createApp, nextTick } from 'vue'
-import ExpDialog from '@/components/ExpDialog.vue'
-import ErrorDialog from '@/components/ErrorDialog.vue'
-import InfoDialog from '@/components/InfoDialog.vue'
+import ExpDialog from '@/components/feedback/ExpDialog.vue'
+import ErrorDialog from '@/components/feedback/ErrorDialog.vue'
+import InfoDialog from '@/components/feedback/InfoDialog.vue'
 
 // Notification manager to handle stacking
 class NotificationManager {

@@ -45,9 +45,28 @@
         <div class="panel-content">
           <h1 class="welcome-title" style="color: #409EFF;">{{ showRegister ? 'Welcome Back!' : 'Hello, Welcome!' }}</h1>
           <p class="welcome-text">{{ showRegister ? 'Already have an account?' : 'Don\'t have an account?' }}</p>
-          <DangerButton type="success" class="action-button" @click="toggleForm">
-            <span style="color: white;">{{ showRegister ? 'Login' : 'Register' }}</span>
-          </DangerButton>
+          <!-- Icon CTA (replaces button) -->
+          <div
+            class="panel-cta"
+            @click="toggleForm"
+            @keydown.enter.space="toggleForm"
+            :aria-label="showRegister ? 'Go to Login' : 'Go to Register'"
+            role="button"
+            tabindex="0"
+          >
+            <!-- Login icon when on Register panel -->
+            <svg v-if="showRegister" class="cta-icon" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <path d="M10 3a1 1 0 0 1 1-1h7a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3h-7a1 1 0 1 1 0-2h7a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 1-1-1z"/>
+              <path d="M13.707 11.293a1 1 0 0 0-1.414 1.414l2.586 2.586a1 1 0 0 0 1.414-1.414L15.414 13H4a1 1 0 1 0 0 2h8a1 1 0 1 0 0-2H4a3 3 0 1 1 0-6h8a1 1 0 1 0 0-2H4a5 5 0 0 0 0 10h11.414l1.879 1.879a3 3 0 1 1-4.243 4.243l-2.586-2.586a3 3 0 0 1 0-4.243l2.243-2.243z" fill-opacity="0"/>
+              <path d="M12.293 7.293a1 1 0 0 1 1.414 0L17 10.586a2 2 0 0 1 0 2.828l-3.293 3.293a1 1 0 1 1-1.414-1.414L14.586 12 12.293 9.707a1 1 0 0 1 0-1.414z"/>
+            </svg>
+            <!-- Register icon when on Login panel -->
+            <svg v-else class="cta-icon" viewBox="0 0 24 24" role="img" aria-hidden="true">
+              <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4.418 0-8 2.239-8 5v1a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-1c0-2.761-3.582-5-8-5z"/>
+              <path d="M19 8a1 1 0 0 1 1 1v1h1a1 1 0 1 1 0 2h-1v1a1 1 0 0 1-2 0v-1h-1a1 1 0 1 1 0-2h1V9a1 1 0 0 1 1-1z"/>
+            </svg>
+            <div class="cta-label">{{ showRegister ? 'Login' : 'Register' }}</div>
+          </div>
         </div>
       </div>
 
@@ -59,12 +78,28 @@
           <!-- Login Form -->
           <div v-if="!showRegister" class="form">
             <el-form :model="loginForm" ref="loginFormRef" @submit.prevent>
-              <el-form-item prop="username">
-                <el-input v-model="loginForm.username" placeholder="Username" :prefix-icon="User" />
+              <el-form-item prop="username" class="arc-input">
+                <el-input
+                  v-model="loginForm.username"
+                  placeholder="Username"
+                  :prefix-icon="User"
+                  clearable
+                  size="large"
+                  autocomplete="username"
+                />
               </el-form-item>
 
-              <el-form-item prop="password">
-                <el-input v-model="loginForm.password" type="password" placeholder="Password" :prefix-icon="Lock" />
+              <el-form-item prop="password" class="arc-input">
+                <el-input
+                  v-model="loginForm.password"
+                  type="password"
+                  placeholder="Password"
+                  :prefix-icon="Lock"
+                  show-password
+                  clearable
+                  size="large"
+                  autocomplete="current-password"
+                />
               </el-form-item>
 
               <div class="forgot-password">
@@ -82,15 +117,15 @@
           <!-- Register Form -->
           <div v-else class="form">
             <el-form :model="registerForm" ref="registerFormRef" @submit.prevent>
-              <el-form-item prop="username">
+              <el-form-item prop="username" class="arc-input">
                 <el-input v-model="registerForm.username" placeholder="username" :prefix-icon="User" />
               </el-form-item>
 
-              <el-form-item prop="password">
+              <el-form-item prop="password" class="arc-input">
                 <el-input v-model="registerForm.password" type="password" placeholder="Password" :prefix-icon="Lock" />
               </el-form-item>
 
-              <el-form-item prop="confirmPassword">
+              <el-form-item prop="confirmPassword" class="arc-input"  >
                 <el-input v-model="registerForm.confirmPassword" type="password" placeholder="Confirm Password"
                   :prefix-icon="Lock" />
               </el-form-item>
@@ -107,40 +142,65 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { User, Lock } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
-import { registerService, loginService } from '@/api/user'
-import { useUserInfoStore } from '@/stores/user'
-import DangerButton from '@/components/dangerButton.vue'
-import ArcMessage from '@/utils/ArcMessage'
+// ==================== 导入依赖 ====================
+// Vue核心
+import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 
-// State
-const showRegister = ref(false)
-const router = useRouter()
-const userInfoStore = useUserInfoStore()
+// Element Plus
+import { User, Lock } from '@element-plus/icons-vue';
 
-// Form data
-const loginForm = reactive({
+// 本地组件
+import DangerButton from '@/components/form/DangerButton.vue';
+
+// API接口
+import { registerService, loginService } from '@/api/user';
+
+// Stores
+import { useUserInfoStore } from '@/stores/user';
+
+// 工具函数
+import ArcMessage from '@/utils/ArcMessage';
+
+// ==================== 路由和Store ====================
+const router = useRouter();
+const userInfoStore = useUserInfoStore();
+
+// ==================== 响应式数据 ====================
+// #region 数据存储
+// UI状态
+const showRegister = ref(false); // 是否显示注册表单
+
+// 表单数据
+const loginForm = reactive({ // 登录表单数据
   username: '',
   password: ''
-})
+});
 
-const registerForm = reactive({
+const registerForm = reactive({ // 注册表单数据
   username: '',
   password: '',
   confirmPassword: ''
-})
+});
 
-// Form refs
-const loginFormRef = ref(null)
-const registerFormRef = ref(null)
+// 表单引用
+const loginFormRef = ref(null); // 登录表单DOM引用
+const registerFormRef = ref(null); // 注册表单DOM引用
+// #endregion
 
-// Methods
+// #region 表单操作
+/**
+ * 切换登录/注册表单
+ */
 const toggleForm = () => {
-  showRegister.value = !showRegister.value
-}
+  showRegister.value = !showRegister.value;
+};
+// #endregion
 
+// #region 登录处理
+/**
+ * 处理用户登录
+ */
 const handleLogin = async () => {
   try {
     if (!loginForm.username || !loginForm.password) {
@@ -166,8 +226,10 @@ const handleLogin = async () => {
     }
   } catch (error) {
   }
-}
+};
+// #endregion
 
+// #region 注册处理
 const handleRegister = async () => {
   try {
     if (!registerForm.username || !registerForm.password || !registerForm.confirmPassword) {
@@ -207,6 +269,7 @@ const handleRegister = async () => {
     console.error('注册错误:', error)
   }
 }
+// #endregion
 
 // 回到首页方法
 const goToChat = () => {
@@ -215,6 +278,7 @@ const goToChat = () => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 .form-container {
   display: flex;
   justify-content: center;
@@ -303,19 +367,18 @@ const goToChat = () => {
   /* register 左侧绿色渐变 */
   background: linear-gradient(135deg, #eafff3 0%, #7ed957 100%);
   color: #222;
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
+    border-radius: 20px 80% 20px 20px;
   transform: translateX(0);
-  border-right: 1px solid #f0f2f5;
   transition: background 0.5s;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10),
+    0 1.5px 8px 0 rgba(64, 158, 255, 0.08),
+    0 24px 48px 0 rgba(64, 158, 255, 0.10),
+    0 1.5px 32px 0 rgba(30, 41, 88, 0.10);
 }
 
 .form-panel {
   /* login 右侧蓝色渐变 */
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
   transform: translateX(0);
-  border-left: 1px solid #f0f2f5;
   transition: background 0.5s;
 }
 
@@ -323,16 +386,17 @@ const goToChat = () => {
 .show-register .welcome-panel {
   background: linear-gradient(135deg, #e3f0ff 0%, #409EFF 100%);
   transform: translateX(100%);
-  border-radius: 0 20px 20px 0;
-  border-right: none;
-  border-left: 1px solid #f0f2f5;
+  border-radius: 0px 20px 20px 80%;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10),
+    0 1.5px 8px 0 rgba(64, 158, 255, 0.08),
+    0 24px 48px 0 rgba(64, 158, 255, 0.10),
+    0 1.5px 32px 0 rgba(30, 41, 88, 0.10);
 }
 
 .show-register .form-panel {
   transform: translateX(-100%);
   border-radius: 20px 0 0 20px;
   border-left: none;
-  border-right: 1px solid #f0f2f5;
 }
 
 .panel-content {
@@ -346,7 +410,8 @@ const goToChat = () => {
 
 .welcome-title {
   font-size: 2.7rem;
-  margin-bottom: 18px;
+  line-height: 1.25;
+  margin-top: 18px;
   font-weight: 800;
   letter-spacing: 1.5px;
   color: #1a8cff;
@@ -354,19 +419,26 @@ const goToChat = () => {
 }
 
 .welcome-text {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
   font-size: 1.08rem;
+  line-height: 1.4;
   color: #3a3a3a;
   font-weight: 500;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .form-title {
-  font-size: 5.1rem;
-  margin-bottom: 32px;
+  font-size: 3.1rem;
   color: #06aa06;
   font-weight: 800;
   letter-spacing: 1.2px;
+}
+
+/* Pixel font for background panel texts */
+
+.welcome-text
+ {
+  font-family: 'Press Start 2P', monospace;
 }
 
 .action-button {
@@ -378,36 +450,103 @@ const goToChat = () => {
   letter-spacing: 1px;
 }
 
+.panel-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+  cursor: pointer;
+  user-select: none;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(31, 38, 135, 0.12);
+  transition: transform .15s ease, box-shadow .25s ease, background .25s ease;
+}
+
+.panel-cta:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.35), 0 10px 30px rgba(31, 38, 135, 0.18);
+}
+
+.panel-cta:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 12px 28px rgba(31, 38, 135, 0.16);
+}
+
+.cta-icon {
+  width: 40px;
+  height: 40px;
+  fill: #ffffff;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.18));
+}
+
+.cta-label {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.16);
+}
+
 .form {
   width: 100%;
-
 }
 
-/* 优化输入框样式，让嵌入效果更明显 */
-:deep(.el-input__wrapper) {
-  background: #f6faff;
-  border-radius: 10px;
-  border: none;
-  box-shadow: 0 2px 12px 0 rgba(204, 204, 204, 0.1) inset, 0 1.5px 8px 0 rgba(64, 158, 255, 0.08) inset;
-  font-size: 1.08rem;
+/* 输入框美化：仅作用于 .arc-input 表单项，避免全局污染 */
+/* 基础外观 */
+:deep(.arc-input .el-input__wrapper) {
+  position: relative;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  border: 1px solid rgba(64, 158, 255, 0.18);
+  box-shadow: 0 4px 16px rgba(31, 38, 135, 0.06);
+  transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, transform 0.12s ease;
+  padding: 2px 14px;
+}
+
+/* 悬停与聚焦态：柔和的渐变高亮环 */
+:deep(.arc-input .el-input__wrapper:hover) {
+  border-color: rgba(64, 158, 255, 0.35);
+  box-shadow: 0 6px 18px rgba(31, 38, 135, 0.09);
+}
+
+:deep(.arc-input .el-input__wrapper.is-focus) {
+  background: #ffffff;
+  transform: translateY(-1px);
+  border-color: transparent;
+  box-shadow:
+    0 10px 28px rgba(31, 38, 135, 0.12),
+    0 0 0 3px rgba(64, 158, 255, 0.18),
+    0 0 0 1px rgba(64, 158, 255, 0.28) inset;
+}
+
+/* 前后缀图标与占位符颜色 */
+:deep(.arc-input .el-input__prefix),
+:deep(.arc-input .el-input__suffix) {
+  color: #7aa7ff;
+}
+
+:deep(.arc-input .el-input__inner) {
+  color: #1f2937;
+  font-size: 1.05rem;
   font-weight: 600;
-  color: #222;
-  transition: box-shadow 0.3s, background 0.3s;
-  padding: 2px 12px;
+  letter-spacing: 0.3px;
+  background: transparent;
 }
 
-:deep(.el-input__wrapper:hover),
-:deep(.el-input__wrapper.is-focus) {
-  background: #9ff0b1;
-  box-shadow: 0 4px 24px 0 #ebedee inset, 0 2px 16px 0 #409eff22 inset;
-  animation: input-embed-in 0.3s cubic-bezier(.4,0,.2,1);
+:deep(.arc-input .el-input__inner::placeholder) {
+  color: #9aa5b1;
+  font-weight: 500;
 }
 
-:deep(.el-input__inner) {
-  color: #222;
-  font-size: 1.08rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+/* 校验错误态 */
+:deep(.el-form-item.is-error .el-input__wrapper) {
+  border-color: rgba(239, 68, 68, 0.45) !important;
+  box-shadow: 0 10px 28px rgba(31, 38, 135, 0.08), 0 0 0 3px rgba(239, 68, 68, 0.16) !important;
 }
 
 .forgot-password {
@@ -493,10 +632,13 @@ const goToChat = () => {
   .login-svg-bg {
     width: 160px;
     height: 80px;
-  }
-  .login-svg-bg-right {
-    width: 120px;
-    height: 60px;
+    .login-svg-bg-right {
+      width: 120px;
+      height: 60px;
+    }
+    .cta-icon { width: 34px; height: 34px; }
+    .cta-label { font-size: 1.1rem; }
   }
 }
 </style>
+
