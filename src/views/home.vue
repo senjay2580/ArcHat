@@ -44,7 +44,7 @@
       <!-- #region 会话列表 -->
       <el-aside :class="['sidebar', { collapsed: isSidebarCollapse }]">
         <div class="sidebar-header" v-if="!isSidebarCollapse">
-          <h2 class="inbox-title"> <a @click="router.push('/chat')" style="cursor: pointer;"><img src="/src/assets/image/archat.png" alt="" width="50px"></a>ArcHat
+          <h2 class="inbox-title"> <a @click="router.push('/login')" style="cursor: pointer;"><img src="/src/assets/image/archat.png" alt="" width="50px"></a>ArcHat
           </h2>
           <div class="visitor-tag"><el-icon>
               <UserFilled />
