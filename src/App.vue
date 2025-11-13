@@ -9,6 +9,7 @@ import GlobalCallBubble from '@/components/call/GlobalCallBubble.vue';
 import IncomingCallNotification from '@/components/business/IncomingCallNotification.vue';
 import VideoCallBubble from '@/components/call/VideoCallBubble.vue';
 import IncomingVideoCallNotification from '@/components/business/IncomingVideoCallNotification.vue';
+import SimpleNotificationManager from '@/components/business/SimpleNotificationManager.vue';
 
 const userInfoStore = useUserInfoStore();
 const callStore = useCallStore();
@@ -16,6 +17,7 @@ const videoCallStore = useVideoCallStore();
 
 // 页面加载时检查并建立连接
 onMounted(() => {
+  console.log('🏠 App.vue 挂载，用户信息:', userInfoStore.userInfo);
   if (userInfoStore.userInfo?.token) {
     userInfoStore.connectWebSocket();
     
@@ -59,6 +61,10 @@ onMounted(() => {
   <VideoCallBubble />
   <!-- 视频通话来电通知（独立组件） -->
   <IncomingVideoCallNotification />
+  
+  <!-- 简单消息通知管理器 -->
+  <SimpleNotificationManager />
+
 </template>
 
 <style scoped>

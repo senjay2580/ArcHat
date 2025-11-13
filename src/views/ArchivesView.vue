@@ -839,6 +839,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import '@/assets/styles/archives.night.css';
+
 /* Fullscreen Editor Transition */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
@@ -856,7 +858,7 @@ onUnmounted(() => {
   opacity: 1;
   transform: scale(1);
 }
-@import '@/assets/styles/archives.night.css';
+
 .arc-water-header {
   font-size: 2rem;
   font-weight: 700;
@@ -1188,6 +1190,7 @@ onUnmounted(() => {
 
 /* Flash Editor 高度限制 */
 .flash-editor-wrapper {
+  position: relative; /* 添加相对定位，让目录可以相对于编辑器定位 */
   display: flex;
   flex-direction: column;
   height: 100%;

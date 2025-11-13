@@ -53,6 +53,8 @@ const editorRef = ref(null);
 const isFullScreen = ref(false);
 const editorContent = ref('');
 const isSubmitting = ref(false);
+const isInitialized = ref(false); // 添加初始化标记
+const lastNoteId = ref(null); // 记录上次编辑的笔记ID
 
 // 计算是否可以保存
 const canSave = computed(() => {
@@ -147,17 +149,41 @@ const handleSave = async () => {
   }
 };
 
+// 防抖函数
+let initTimeout = null;
+
 watch(() => props.visible, (newVal) => {
   if (newVal) {
     // 重置状态
     isFullScreen.value = false;
-
-    // 使用 nextTick 确保 editorRef 可用
-    nextTick(() => {
-      if (props.note && editorRef.value) {
-        editorRef.value.setContent(props.note.content);
-      }
-    });
+    
+    // 清除之前的定时器
+    if (initTimeout) {
+      clearTimeout(initTimeout);
+    }
+    
+    // 使用防抖机制，避免快速重复初始化
+    initTimeout = setTimeout(() => {
+      nextTick(() => {
+        if (props.note && editorRef.value) {
+          // 检查是否是同一个笔记，避免重复设置
+          const currentNoteId = props.note.id;
+          if (lastNoteId.value !== currentNoteId || !isInitialized.value) {
+            editorRef.value.setContent(props.note.content || '');
+            lastNoteId.value = currentNoteId;
+            isInitialized.value = true;
+          }
+        }
+      });
+    }, 50); // 50ms防抖延迟
+  } else {
+    // 模态框关闭时重置状态
+    isInitialized.value = false;
+    lastNoteId.value = null;
+    if (initTimeout) {
+      clearTimeout(initTimeout);
+      initTimeout = null;
+    }
   }
 });
 

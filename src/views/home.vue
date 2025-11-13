@@ -785,6 +785,7 @@ const fetchContactList = async () => {
       });
       const contacts = contactRes.data.records.map(contact => {
         const friendInfo = friendMap.value.get(contact.friendId) || {};
+        const existingContact = contactStore.getContactById(contact.friendId);
         return {
           contactId: contact.id,
           id: contact.friendId,
@@ -795,7 +796,7 @@ const fetchContactList = async () => {
           readTime: contact.readTime,
           username: friendInfo.username || '未知用户',
           avatar: friendInfo.avatar || '',
-          status: friendInfo.status || false,
+          status: existingContact?.status ?? friendInfo.status ?? false,
           createTime: friendInfo.createTime,
           exp: friendInfo.exp,
           unreadCount: unreadMap[contact.id] || 0

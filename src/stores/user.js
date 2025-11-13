@@ -2,12 +2,11 @@ import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import ChatWebSocket from "@/api/chat.js";
 import emitter from '@/utils/eventBus';
+import { showNotification } from '@/utils/notificationManager';
 
 export const useUserInfoStore = defineStore('userInfo', () => {
   const userInfo = ref('');
   const chatWS = ref(null);
-
-
 
   const setUserInfo = (newUserInfo) => {
     userInfo.value = newUserInfo;
@@ -77,7 +76,12 @@ export const useUserInfoStore = defineStore('userInfo', () => {
             // 根据消息类型分发到不同的组件
             switch (data.type) {
               case 1000: // 聊天消息
-                emitter.emit('chat-message', data.data);
+                console.log('💬 收到聊天消息:', data.data);
+                
+                // 直接调用通知管理器显示通知
+                const currentRoute = window.location.pathname;
+                showNotification(data.data, currentRoute);
+                
                 emitter.emit('refresh-contact-list');
                 break;
               case 1001: // 好友申请消息

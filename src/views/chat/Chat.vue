@@ -41,26 +41,31 @@
     <div class="chat-message-list" ref="messagesContainer">
 
       <template v-if="messages.length > 0">
-        <div v-for="(msg, idx) in messages" :key="idx" class="message-wrapper" v-show="!isLoading">
-          <!-- 时间显示 -->
-          <div v-if="shouldShowTime(msg, idx)" class="message-time-group">
-            <span class="time-divider">{{ formatMessageDate(new Date(msg.time)) }}</span>
-          </div>
-          <div :class="['chat-message-item', msg.side]" @mouseenter="hoverIdx = idx" @mouseleave="hoverIdx = null">
-            <!-- 撤回icon，仅自己消息可见，同行右侧 -->
-            <span v-if="msg.side === 'right'" class="recall-inline-icon" v-show="hoverIdx === idx"
-              @click="onRecallMessage(msg)">
-              <el-icon style="color:#f5222d;font-size:15px;vertical-align:middle;">
-                <Close />
-              </el-icon>
-              <span class="recall-text">撤回</span>
-            </span>
-            <el-avatar v-if="msg.side === 'left'" :size="32" class="user-avatar" :src="currentChat.avatar"
-              @click="(e) => handleViewUser(e)" />
-            <div class="chat-bubble" v-html="linkify(msg.text)"></div>
-            <el-avatar v-if="msg.side === 'right'" :size="32" class="user-avatar" :src="userStore.userInfo.avatar" />
-
-          </div>
+        <div v-for="(msg, idx) in messages" :key="msg.id || idx" 
+             class="message-wrapper" 
+             :data-msg-id="msg.id || idx"
+             v-show="!isLoading"
+             :style="{ minHeight: msg.isVisible ? 'auto' : '60px' }">
+          <template v-if="msg.isVisible">
+            <!-- 时间显示 -->
+            <div v-if="shouldShowTime(msg, idx)" class="message-time-group">
+              <span class="time-divider">{{ formatMessageDate(new Date(msg.time)) }}</span>
+            </div>
+            <div :class="['chat-message-item', msg.side]" @mouseenter="hoverIdx = idx" @mouseleave="hoverIdx = null">
+              <!-- 撤回icon，仅自己消息可见，同行右侧 -->
+              <span v-if="msg.side === 'right'" class="recall-inline-icon" v-show="hoverIdx === idx"
+                @click="onRecallMessage(msg)">
+                <el-icon style="color:#f5222d;font-size:15px;vertical-align:middle;">
+                  <Close />
+                </el-icon>
+                <span class="recall-text">撤回</span>
+              </span>
+              <el-avatar v-if="msg.side === 'left'" :size="32" class="user-avatar" :src="currentChat.avatar"
+                @click="(e) => handleViewUser(e)" />
+              <div class="chat-bubble" v-html="linkify(msg.text)"></div>
+              <el-avatar v-if="msg.side === 'right'" :size="32" class="user-avatar" :src="userStore.userInfo.avatar" />
+            </div>
+          </template>
         </div>
       </template>
       <template v-else>
@@ -195,7 +200,6 @@ import { useVideoCallStore } from '@/stores/videoCall.js';
 import { calculateLevel, linkify } from '@/utils/exp';
 import emitter from '@/utils/eventBus';
 import ArcMessage from '@/utils/ArcMessage';
-import clickSound from '@/assets/sounds/click.m4a';
 // #endregion
 
 // #region 基础状态
@@ -241,6 +245,7 @@ const userDetailPosition = ref({ x: 0, y: 0 }); // 用户详情弹窗位置
 const isReconnecting = ref(false); // WebSocket重连中标识
 const isDarkMode = useDark(); // 暗黑模式状态
 const inputContainer = ref(null); // 输入框容器DOM引用
+const themeTransitionTimer = ref(null); // 主题切换防抖定时器
 const currentInputValue = computed({ // 当前聊天室输入内容（可读写）
   get() {
     return inputValueMap.value[currentChat.value.roomId] || '';
@@ -265,15 +270,14 @@ const currentChat = ref({
 const message = ref(''); // 当前输入的消息内容
 const messagesContainer = ref(null); // 消息列表容器DOM引用
 const messageInput = ref(null); // 输入框DOM引用
+const observer = ref(null); // Intersection Observer实例（懒渲染）
 
 // WebSocket连接
 const chatWS = computed(() => userStore.chatWS); // WebSocket实例
 const connectionStatus = ref('connected'); // 连接状态: connected/disconnected/connecting
 
-// 音频相关
+// UI状态
 const isLoading = ref(false); // 加载状态
-const audioContext = new (window.AudioContext || window.webkitAudioContext)(); // 音频上下文
-let messageSound = null; // 消息提示音实例
 // #endregion
 
 // #region 计算属性
@@ -302,28 +306,57 @@ const scrollToBottom = () => {
 };
 
 /**
- * 初始化消息提示音
+ * 设置Intersection Observer进行懒渲染
  */
-const initAudio = async () => {
-  try {
-    await audioContext.resume();
-    messageSound = new Audio();
-    messageSound.src = clickSound;
-    messageSound.volume = 1.0;
-    messageSound.preload = 'auto';
-    await new Promise((resolve, reject) => {
-      messageSound.addEventListener('canplaythrough', resolve, { once: true });
-      messageSound.addEventListener('error', (e) => {
-        console.error('音频加载错误:', e);
-        console.error('音频URL:', messageSound.src);
-        reject(e);
-      }, { once: true });
-      messageSound.load();
-    });
-  } catch (error) {
-    console.error('音频初始化失败:', error);
+const setupObserver = () => {
+  if (observer.value) {
+    observer.value.disconnect();
   }
+
+  const options = {
+    root: messagesContainer.value,
+    rootMargin: '200px 0px 200px 0px', // 更大的边距以获得更流畅的滚动
+    threshold: 0.01
+  };
+
+  observer.value = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      const msgId = entry.target.dataset.msgId;
+      const msg = messages.value.find(m => (m.id || m.idx) == msgId);
+      if (msg) {
+        // 根据交集状态动态设置可见性
+        msg.isVisible = entry.isIntersecting;
+      }
+    });
+  }, options);
+
+  // 观察所有消息元素
+  nextTick(() => {
+    const messageNodes = messagesContainer.value?.querySelectorAll('.message-wrapper');
+    messageNodes?.forEach(node => {
+      observer.value.observe(node);
+    });
+  });
 };
+
+/**
+ * 优化主题切换性能
+ */
+const optimizeThemeTransition = () => {
+  // 添加过渡类
+  document.body.classList.add('theme-transition');
+  
+  // 清除之前的定时器
+  if (themeTransitionTimer.value) {
+    clearTimeout(themeTransitionTimer.value);
+  }
+  
+  // 300ms后移除过渡类，避免影响其他动画
+  themeTransitionTimer.value = setTimeout(() => {
+    document.body.classList.remove('theme-transition');
+  }, 300);
+};
+
 // #endregion
 
 // #region 表情选择器处理
@@ -389,16 +422,21 @@ const getHistoryMessages = async (roomId) => {
     isLoading.value = true;
     const res = await getFriendMessageList({ roomId });
     if (res.code === 200) {
-      const historyMessages = res.data.map(msg => ({
+      const historyMessages = res.data.map((msg, idx) => ({
         side: msg.fromUid === userStore.userInfo.uid ? 'right' : 'left',
         text: msg.content,
         time: msg.createTime,
         id: msg.id,
+        idx: `hist-${idx}`,
         status: msg.status,
-        type: msg.type
+        type: msg.type,
+        isVisible: false // 历史消息初始为不可见
       }));
       messages.value = historyMessages;
-      scrollToBottom();
+      nextTick(() => {
+        scrollToBottom();
+        setupObserver();
+      });
     } else {
       ElMessage.error(res.msg || '获取历史消息失败');
     }
@@ -480,60 +518,27 @@ onMounted(() => {
 
   emitter.on('chat-message', (messageData) => {
     const isInCurrentChat = currentChat.value && currentChat.value.id === messageData.fromUid;
-    if (!isInCurrentChat) {
-      const sender = contactStore.getContactById(messageData.fromUid);
-      if (sender) {
-        const playSound = async () => {
-          try {
-            if (!messageSound) {
-              await initAudio();
-            }
-            await audioContext.resume();
-            messageSound.volume = 1.0;
-            messageSound.currentTime = 0;
-            await messageSound.play();
-          } catch (error) {
-            console.error('播放提示音失败:', error);
-            messageSound = null;
-          }
-        };
-        playSound();
-        const notification = ElNotification({
-          title: '新消息',
-          message: `${sender.username} 给您发送了一条消息`,
-          type: 'info',
-          duration: 3000,
-          position: 'top-right',
-          customClass: 'apple-notification',
-          onClick: () => {
-            contactStore.setCurrentChat(sender.id);
-            router.push(`/chat/${sender.id}`);
-            emitter.emit('refresh-mail-data');
-            notification.close();
-          }
-        });
-      }
-    } else {
-      messages.value.push({
+    
+    if (isInCurrentChat) {
+      // 只处理当前聊天的消息显示，其他交给GlobalMessageManager处理
+      const newMsg = {
         side: messageData.fromUid === userStore.userInfo.uid ? 'right' : 'left',
         text: messageData.content,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      });
+        id: messageData.id || Date.now(),
+        isVisible: true // 新消息立即可见
+      };
+      messages.value.push(newMsg);
       nextTick(() => {
         scrollToBottom();
+        setupObserver(); // 重新设置观察器
       });
     }
+    // 不在当前聊天的消息由GlobalMessageManager统一处理
   });
   watch(messages, () => {
     scrollToBottom();
   }, { deep: true });
-  const handleUserInteraction = async () => {
-    await initAudio();
-    document.removeEventListener('click', handleUserInteraction);
-    document.removeEventListener('touchstart', handleUserInteraction);
-  };
-  document.addEventListener('click', handleUserInteraction);
-  document.addEventListener('touchstart', handleUserInteraction);
   
   // 监听用户上下线通知
   emitter.on('user-status', (data) => {
@@ -555,6 +560,11 @@ onMounted(() => {
     }
   });
 
+  // 监听主题切换，优化性能
+  watch(isDarkMode, () => {
+    optimizeThemeTransition();
+  });
+
 });
 
 onUnmounted(() => {
@@ -562,9 +572,17 @@ onUnmounted(() => {
   emitter.off('websocket-reconnect');
   emitter.off('websocket-connected');
   emitter.off('user-status'); // 清理用户状态事件监听
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('click', handleClickOutside);
   
-
+  // 断开Intersection Observer
+  if (observer.value) {
+    observer.value.disconnect();
+  }
+  
+  // 清理主题切换定时器
+  if (themeTransitionTimer.value) {
+    clearTimeout(themeTransitionTimer.value);
+  }
 });
 // #endregion
 
@@ -588,17 +606,21 @@ const sendMessage = async () => {
     };
     console.log('发送消息:', msg);
     chatWS.value.send(msg);
-    messages.value.push({
+    const newMsg = {
       side: 'right',
       text: currentInputValue.value,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    });
+      id: Date.now(),
+      isVisible: true // 新发送的消息立即可见
+    };
+    messages.value.push(newMsg);
     inputValueMap.value[currentChat.value.roomId] = '';
     nextTick(() => {
       if (messageInput.value) {
         messageInput.value.focus();
       }
       scrollToBottom();
+      setupObserver(); // 重新设置观察器
     });
   } catch (error) {
     console.error('发送消息失败:', error);

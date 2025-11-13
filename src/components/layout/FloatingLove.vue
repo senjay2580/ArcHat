@@ -10,7 +10,7 @@ import { computed } from 'vue';
 const props = defineProps({
   imageUrl: {
     type: String,
-    default: '/src/assets/image/emojiSets/贴吧表情/爱.png',
+    default: '@/assets/image/emojiSets/贴吧表情/爱.png',
   },
   minSize: {
     type: Number,

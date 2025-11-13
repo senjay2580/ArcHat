@@ -42,6 +42,8 @@
                     v-model:page-size="pageSize"
                     :page-sizes="[5, 10, 20, 50]"
                     :total="sentFriendTotal"
+                    :pager-count="7"
+                    :hide-on-single-page="false"
                     layout="total, sizes, prev, pager, next"
                     @size-change="handleSentFriendSizeChange"
                     @current-change="handleSentFriendCurrentChange"
@@ -79,6 +81,8 @@
                     v-model:page-size="pageSize"
                     :page-sizes="[5, 10, 20, 50]"
                     :total="sentGroupTotal"
+                    :pager-count="7"
+                    :hide-on-single-page="false"
                     layout="total, sizes, prev, pager, next"
                     @size-change="handleSentGroupSizeChange"
                     @current-change="handleSentGroupCurrentChange"
@@ -145,6 +149,8 @@
                     v-model:page-size="pageSize"
                     :page-sizes="[5, 10, 20, 50]"
                     :total="receivedFriendTotal"
+                    :pager-count="7"
+                    :hide-on-single-page="false"
                     layout="total, sizes, prev, pager, next"
                     @size-change="handleReceivedFriendSizeChange"
                     @current-change="handleReceivedFriendCurrentChange"
@@ -188,6 +194,8 @@
                     v-model:page-size="pageSize"
                     :page-sizes="[5, 10, 20, 50]"
                     :total="receivedGroupTotal"
+                    :pager-count="7"
+                    :hide-on-single-page="false"
                     layout="total, sizes, prev, pager, next"
                     @size-change="handleReceivedGroupSizeChange"
                     @current-change="handleReceivedGroupCurrentChange"
@@ -765,10 +773,7 @@ onUnmounted(() => {
   gap: 6px;
   align-items: center;
 }
-.dark-mode .mail-section {
-  background: var(--dark-sidebar-bg) !important;
-}
-
+/* Element UI 组件样式 */
 :deep(.el-tabs__item) {
   font-size: 13px;
   padding: 0 16px;
@@ -786,14 +791,20 @@ onUnmounted(() => {
   font-size: 13px;
 }
 
-/* 暗色模式适配 */
-.dark-mode .mailbox-header h2 {
+/* 暗色模式统一适配 */
+.dark-mode .mail-section {
+  background: var(--dark-sidebar-bg) !important;
+}
+
+.dark-mode .mailbox-header h2,
+.dark-mode .section-title h3,
+.dark-mode .mail-name {
   color: var(--dark-text);
 }
 
-
-.dark-mode .section-title h3 {
-  color: var(--dark-text);
+.dark-mode .mail-time,
+.dark-mode .mail-message {
+  color: var(--dark-secondary-text);
 }
 
 .dark-mode .mail-item {
@@ -807,12 +818,7 @@ onUnmounted(() => {
 }
 
 .dark-mode .mail-item::before {
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.15),
-    transparent
-  );
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.15), transparent);
 }
 
 .dark-mode .mail-item:hover {
@@ -822,15 +828,6 @@ onUnmounted(() => {
     inset 1px 1px 2px rgba(255, 255, 255, 0.15),
     inset -1px -1px 2px rgba(0, 0, 0, 0.3);
   border-color: rgba(255, 255, 255, 0.2);
-}
-
-.dark-mode .mail-name {
-  color: var(--dark-text);
-}
-
-.dark-mode .mail-time,
-.dark-mode .mail-message {
-  color: var(--dark-secondary-text);
 }
 
 .dark-mode .mail-status.pending {
@@ -868,16 +865,17 @@ onUnmounted(() => {
   padding: 8px 0;
 }
 
+/* 分页样式优化 */
+.el-pagination * {
+  border: none !important;
+  color: black !important;
+  background: transparent !important;
+}
 
-
-/* 夜间模式适配 */
-
-
-
+/* 夜间模式特殊处理 */
 .dark-mode .el-pagination,
 .dark-mode .el-pagination * {
   background: transparent !important;
-  background-color: transparent !important;
-  
+  color: white !important;
 }
 </style> 

@@ -35,6 +35,9 @@
         <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" title="Undo">&#x21A9;</button>
         <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" title="Redo">&#x21AA;</button>
         <div class="toolbar-divider"></div>
+        <button @click="toggleTableOfContents" :class="{ 'is-active': showTableOfContents }" title="目录">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/></svg>
+        </button>
         <button @click="emit('request-fullscreen')" title="Fullscreen">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M5 19h4v-2H7v-2H5v4zM5 7h2V5h2V3H5v4zm14 12h-4v2h4v-4h-2v2zm0-14h-2v2h-2v2h4V3z"/></svg>
         </button>
@@ -64,6 +67,15 @@
       @select="setTextColor"
       @remove="removeTextColor"
       @close="showColorPicker = false"
+    />
+    
+    <!-- Table of Contents Component -->
+    <TableOfContents 
+      v-if="showTableOfContents" 
+      ref="tocRef"
+      :editor="editor"
+      :auto-collapse="true"
+      positioning="absolute"
     />
   </div>
 </template>
@@ -100,6 +112,7 @@ import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
+import { Heading } from '@tiptap/extension-heading';
 
 // Extend the default Image extension to allow custom attributes
 const CustomImage = Image.extend({
@@ -119,6 +132,27 @@ const CustomImage = Image.extend({
     };
   },
 });
+
+// Extend the default Heading extension to support ID attributes for TOC
+const CustomHeading = Heading.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      id: {
+        default: null,
+        parseHTML: element => element.getAttribute('id'),
+        renderHTML: attributes => {
+          if (!attributes.id) {
+            return {};
+          }
+          return {
+            id: attributes.id,
+          };
+        },
+      },
+    };
+  },
+});
 import MentionList from '@/components/editor/MentionList.vue';
 import EmojiList from '@/components/interaction/EmojiList.vue';
 import CustomEmojiPicker from '@/components/interaction/CustomEmojiPicker.vue';
@@ -126,6 +160,7 @@ import ColorPicker from '@/components/form/ColorPicker.vue';
 import ImageView from '@/components/interaction/ImageView.vue';
 import ArcTooltip from '@/components/misc/ArcTooltip.vue';
 import DangerButton from '@/components/form/DangerButton.vue';
+import TableOfContents from '@/components/editor/TableOfContents.vue';
 import { watch } from 'vue';
 import { ElImageViewer } from 'element-plus';
 // 创建 lowlight 实例
@@ -153,10 +188,17 @@ const props = defineProps({
   initialContent: {
     type: String,
     default: '',
+  },
+  showTableOfContents: {
+    type: Boolean,
+    default: true,
   }
 });
 
 const emit = defineEmits(['update:modelValue', 'save-draft', 'request-fullscreen']);
+
+// 防抖定时器
+let updateTimeout = null;
 
 const emojiButton = ref(null);
 const showCustomEmojiPicker = ref(false);
@@ -172,6 +214,10 @@ const currentTextColor = ref('#000000');
 const showImageViewer = ref(false);
 const imageViewerList = ref([]);
 const imageViewerIndex = ref(0);
+
+// Table of contents ref and state
+const tocRef = ref(null);
+const showTableOfContents = ref(props.showTableOfContents);
 
 const toggleCustomEmojiPicker = () => {
   if (showCustomEmojiPicker.value) {
@@ -255,6 +301,11 @@ const removeTextColor = () => {
     currentTextColor.value = '#000000';
     showColorPicker.value = false;
   }
+};
+
+// 切换目录显示
+const toggleTableOfContents = () => {
+  showTableOfContents.value = !showTableOfContents.value;
 };
 
 // 字数统计功能
@@ -394,6 +445,11 @@ const editor = useEditor({
     StarterKit.configure({
       codeBlock: false, // 禁用默认的代码块，使用带高亮的版本
       blockquote: false, // 禁用默认的blockquote，使用自定义配置
+      heading: false, // 禁用默认的heading，使用自定义配置
+    }),
+    // 使用自定义的Heading扩展
+    CustomHeading.configure({
+      levels: [1, 2, 3, 4, 5, 6],
     }),
     CodeBlockLowlight.extend({
       addNodeView() {
@@ -494,8 +550,11 @@ const editor = useEditor({
     Underline,
   ],
   onUpdate: ({ editor }) => {
-    // 当内容变化时发出事件
-    emit('update:modelValue', editor.getHTML());
+    // 使用防抖机制，避免频繁更新导致的性能问题
+    clearTimeout(updateTimeout);
+    updateTimeout = setTimeout(() => {
+      emit('update:modelValue', editor.getHTML());
+    }, 100); // 100ms防抖延迟
   },
 });
 
@@ -552,6 +611,11 @@ onMounted(() => {
 // 组件卸载时移除键盘事件监听
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeyDown);
+  // 清理防抖定时器
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+    updateTimeout = null;
+  }
 });
 
 const clearContent = () => {
@@ -563,7 +627,27 @@ const clearContent = () => {
 // 暴露方法给父组件
 const setContent = (content) => {
   if (editor.value) {
-    editor.value.commands.setContent(content);
+    // 获取当前内容，避免不必要的重置
+    const currentContent = editor.value.getHTML();
+    
+    // 只有当内容真正不同时才设置新内容
+    if (currentContent !== content) {
+      // 暂时禁用更新事件，避免循环触发
+      const wasUpdating = updateTimeout !== null;
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+        updateTimeout = null;
+      }
+      
+      editor.value.commands.setContent(content || '');
+      
+      // 如果之前有更新在进行，重新启动
+      if (wasUpdating) {
+        updateTimeout = setTimeout(() => {
+          emit('update:modelValue', editor.value.getHTML());
+        }, 100);
+      }
+    }
   }
 };
 
@@ -579,12 +663,15 @@ defineExpose({
   getContent,
   clearContent,
   wordCount,
-  contentStats
+  contentStats,
+  toggleTableOfContents,
+  tocRef
 });
 </script>
 
 <style scoped>
 .flash-editor-container {
+  position: relative; /* 添加相对定位，让目录可以相对于编辑器定位 */
   background-color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
