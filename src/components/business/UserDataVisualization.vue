@@ -84,7 +84,7 @@ import {
 } from 'echarts/components';
 import VChart from 'vue-echarts';
 import { InfoFilled } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import { 
   getUserActivityData, 
   getFriendLevelDistribution, 
@@ -484,7 +484,7 @@ const loadData = async () => {
     
   } catch (error) {
     console.error('加载数据失败:', error);
-    ElMessage.error('数据加载失败，请稍后重试');
+    ArcMessage.error('数据加载失败，请稍后重试');
   } finally {
     activityLoading.value = false;
     friendLevelLoading.value = false;

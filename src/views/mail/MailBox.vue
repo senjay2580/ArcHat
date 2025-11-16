@@ -233,7 +233,8 @@
 <script setup>
 // #region 导入依赖
 import { ref, computed, onMounted, watch, onUnmounted } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import { Delete } from '@element-plus/icons-vue';
 import UserDetailPopup from '@/components/business/UserDetailPopup.vue';
 import GroupDetailPopup from '@/components/business/GroupDetailPopup.vue';
@@ -327,7 +328,7 @@ const getStatusFromCode = (code) => {
 const handleRequest = async (item, action) => {
   try {
     if (!item.friendId) {
-      ElMessage.error('申请人ID不存在');
+      ArcMessage.warning('申请人ID不存在');
       return;
     }
     
@@ -336,15 +337,15 @@ const handleRequest = async (item, action) => {
 
     const res = await handleFriendApply(applyModel.value);
     if (res.code === 200) {
-      ElMessage.success(action === 'accept' ? '已接受申请' : '已拒绝申请');
+      ArcMessage.success(action === 'accept' ? '已接受申请' : '已拒绝申请');
       fetchReceivedFriendRequests();
       emitter.emit('refresh-friend-list');
     } else {
-      ElMessage.error(res.msg || '操作失败');
+      ArcMessage.error(res.msg || '操作失败');
     }
   } catch (error) {
     console.error('处理好友申请失败:', error);
-    ElMessage.error('处理好友申请失败');
+    ArcMessage.error('处理好友申请失败');
   }
 };
 // #endregion
@@ -420,7 +421,7 @@ const fetchSentFriendRequests = async () => {
     }
   } catch (error) {
     console.error('获取好友申请列表失败:', error);
-    ElMessage.error('获取好友申请列表失败');
+    ArcMessage.error('获取好友申请列表失败');
   }
 };
 
@@ -446,7 +447,7 @@ const fetchReceivedFriendRequests = async () => {
     }
   } catch (error) {
     console.error('获取收到的好友申请列表失败:', error);
-    ElMessage.error('获取收到的好友申请列表失败');
+    ArcMessage.error('获取收到的好友申请列表失败');
   }
 };
 
@@ -470,7 +471,7 @@ const fetchSentGroupRequests = async () => {
     }
   } catch (error) {
     console.error('获取群聊申请列表失败:', error);
-    ElMessage.error('获取群聊申请列表失败');
+    ArcMessage.error('获取群聊申请列表失败');
   }
 };
 // #endregion
@@ -526,14 +527,14 @@ const handleSaveGroupMsg = async () => {
   try {
     const res = await updateGroupApplyMsg({ id: editingGroupItem.value.id, msg: editingMsg.value });
     if (res.code === 200) {
-      ElMessage.success('修改成功');
+      ArcMessage.success('修改成功');
       showEditMsgDialog.value = false;
       fetchSentGroupRequests();
     } else {
-      ElMessage.error(res.msg || '修改失败');
+      ArcMessage.error(res.msg || '修改失败');
     }
   } catch (e) {
-    ElMessage.error('修改失败');
+    ArcMessage.error('修改失败');
   }
 };
 

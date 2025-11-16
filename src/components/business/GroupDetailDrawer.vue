@@ -466,8 +466,7 @@ import UserDetailPopup from '@/components/business/UserDetailPopup.vue'
 import WorningTips from '@/components/feedback/WorningTips.vue'
 import SuccessTips from '@/components/feedback/SuccessTips.vue'
 import { listGroupMember, removeMember, modifyGroup, authorizeMember, outGroup, dismissGroup } from '@/api/room'
-import ArcMessage from '@/utils/ArcMessage.js'
-import { ElMessage } from 'element-plus'
+import ArcMessage from '@/utils/ArcMessage'
 import { useUserInfoStore } from '@/stores/user'
 import { uploadImageFile } from '@/utils/fileHandler'
 import FullScreenDialog from '@/components/layout/FullScreenDialog.vue'
@@ -1147,7 +1146,7 @@ const handleAvatarUpload = () => {
       avatarFile.value = file
       avatarPreview.value = URL.createObjectURL(file)
     } else {
-      ElMessage.error('请上传图片文件')
+      ArcMessage.warning('请上传图片文件')
     }
   }
   input.click()
@@ -1156,12 +1155,12 @@ const handleAvatarUpload = () => {
 // 确认保存群信息
 const confirmSaveGroupInfo = async () => {
   if (!editForm.value.name.trim()) {
-    ElMessage.error('群名称不能为空')
+    ArcMessage.warning('群名称不能为空')
     return
   }
 
   if (editForm.value.announcement.length > 100) {
-    ElMessage.error('群公告不能超过100字')
+    ArcMessage.warning('群公告不能超过100字')
     return
   }
 
@@ -1196,11 +1195,11 @@ const confirmSaveGroupInfo = async () => {
 
       emit('refresh-group-data')
     } else {
-      ElMessage.error(response.message || '更新失败')
+      ArcMessage.error(response.message || '更新失败')
     }
   } catch (error) {
     console.error('更新群信息失败:', error)
-    ElMessage.error('更新失败，请稍后重试')
+    ArcMessage.error('更新失败，请稍后重试')
   } finally {
     isUploading.value = false
   }
@@ -1210,12 +1209,12 @@ const confirmSaveGroupInfo = async () => {
 const confirmDisbandGroup = async () => {
   try {
     await dismissGroup(props.group.id)
-    ElMessage.success('群聊已解散')
+    ArcMessage.success('群聊已解散')
     showDisbandWarning.value = false
     emit('update:visible', false)
   } catch (error) {
     console.error('解散群聊失败:', error)
-    ElMessage.error('解散失败，请稍后重试')
+    ArcMessage.error('解散失败，请稍后重试')
   }
 }
 

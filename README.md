@@ -108,6 +108,148 @@ docker run -d -p 80:80 --name archat archat-client
 
 ## 🖼️ 项目预览
 
+### 🏠 登录注册 & 主页
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="preview/Login^register.png" alt="登录注册" />
+        <p align="center"><b>登录注册界面</b></p>
+      </td>
+      <td width="50%">
+        <img src="preview/home.png" alt="主页" />
+        <p align="center"><b>主页（日间模式）</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <img src="preview/home-night.png" alt="主页-夜间" />
+        <p align="center"><b>主页（夜间模式）</b></p>
+      </td>
+      <td width="50%">
+        <img src="preview/search.png" alt="搜索功能" />
+        <p align="center"><b>好友/群聊全局搜索</b></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+### 💬 聊天功能
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%">
+        <img src="preview/chat.png" alt="私聊" />
+        <p align="center"><b>私聊界面</b></p>
+      </td>
+      <td width="50%">
+        <img src="preview/groupchat1.png" alt="群聊" />
+        <p align="center"><b>群聊界面</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td width="50%">
+        <img src="preview/groupchat2.png" alt="群聊消息" />
+        <p align="center"><b>群聊信息</b></p>
+      </td>
+      <td width="50%">
+        <img src="preview/groupManage.png" alt="群组管理" />
+        <p align="center"><b>群聊管理</b></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+### 🤖 AI 智能助手
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="33.3%">
+        <img src="preview/AiWelcome.png" alt="AI欢迎界面" />
+        <p align="center"><b>AI 欢迎界面</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/Aichat1.png" alt="AI聊天1" />
+        <p align="center"><b>AI 对话界面(一)</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/Aichat2.png" alt="AI聊天2" />
+        <p align="center"><b>AI 对话界面（二）</b></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+### 📞 音视频通话
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="33.3%">
+        <img src="preview/audio_call.png" alt="语音通话" />
+        <p align="center"><b>语音通话待机</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/video_call1.png" alt="视频通话1" />
+        <p align="center"><b>视频通话待机</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/video_call2.png" alt="视频通话2" />
+        <p align="center"><b>视频通话界面</b></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
+### 👤 用户中心 & 效率工具
+
+<div align="center">
+  <table>
+    <tr>
+      <td width="33.3%">
+        <img src="preview/userHub.png" alt="用户中心" />
+        <p align="center"><b>用户中心</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/mail.png" alt="邮箱" />
+        <p align="center"><b>消息中心</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/todo.png" alt="待办事项" />
+        <p align="center"><b>数据统计和其他功能</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td width="33.3%">
+        <img src="preview/TodoList.png" alt="待办列表" />
+        <p align="center"><b>待办列表详情</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/note1.png" alt="笔记" />
+        <p align="center"><b>笔记编辑器</b></p>
+      </td>
+      <td width="33.3%">
+        <img src="preview/note2.png" alt="笔记列表" />
+        <p align="center"><b>笔记管理</b></p>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3" align="center">
+        <img src="preview/note3.png" alt="笔记富文本" style="max-width: 66%;" />
+        <p align="center"><b>富文本笔记编辑</b></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+
 
 
 

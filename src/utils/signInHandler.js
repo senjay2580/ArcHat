@@ -1,20 +1,20 @@
 import { signInService, getSignInDetailService } from '@/api/signIn'
-import { ElMessage } from 'element-plus'
+import ArcMessage from '@/utils/ArcMessage';
 
 // 签到处理
 export const handleSignIn = async () => {
   try {
     const res = await signInService()
     if (res.code === 200) {
-      ElMessage.success('签到成功！')
+      ArcMessage.success('签到成功！')
       return true
     } else {
-      ElMessage.error(res.msg || '签到失败')
+      ArcMessage.error(res.msg || '签到失败')
       return false
     }
   } catch (error) {
     console.error('签到错误:', error)
-    ElMessage.error('签到失败，请稍后重试')
+    ArcMessage.error('签到失败，请稍后重试')
     return false
   }
 }

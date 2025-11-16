@@ -517,7 +517,8 @@
 // #region 导入依赖
 import { ref, computed, onMounted, watch, h } from 'vue';
 import { useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import { SwitchButton, Close, Delete, Search, Plus, Check, Folder, UserFilled, View, MoreFilled, Setting } from '@element-plus/icons-vue';
 import { UserCog } from 'lucide-vue-next';
 
@@ -765,19 +766,19 @@ const handleEditUsername = () => {
  */
 const saveUsername = async () => {
   if(editingUsername.value === '') {
-    ElMessage.warning('用户名不能为空');
+    ArcMessage.warning('用户名不能为空');
     return;
   }
   if(editingUsername.value === userInfo.value.username) {
-    ElMessage.warning('用户名不能与原用户名相同');
+    ArcMessage.warning('用户名不能与原用户名相同');
     return;
   }
   if(editingUsername.value.length < 5 || editingUsername.value.length > 20) {
-    ElMessage.warning('用户名长度必须在5-20个字符之间');
+    ArcMessage.warning('用户名长度必须在5-20个字符之间');
     return;
   }
   if(!/^[a-zA-Z0-9]+$/.test(editingUsername.value)) {
-    ElMessage.warning('用户名只能包含字母和数字');
+    ArcMessage.warning('用户名只能包含字母和数字');
     return;
   }
 
@@ -785,14 +786,14 @@ const saveUsername = async () => {
     const res = await modifyUsernameService({ username: editingUsername.value });
     if (res.code === 200) {
       userInfoStore.setUserInfo({ ...userInfo.value, username: editingUsername.value });
-      ElMessage.success('用户名修改成功');
+      ArcMessage.success('用户名修改成功');
       showPopover.value = false;
     } else {
-      ElMessage.error(res.msg || '修改失败');
+      ArcMessage.error(res.msg || '修改失败');
     }
   } catch (error) {
     console.error('修改用户名失败:', error);
-    ElMessage.error('修改失败，请稍后重试');
+    ArcMessage.error('修改失败，请稍后重试');
   }
 };
 // #endregion
@@ -803,7 +804,7 @@ const saveUsername = async () => {
  */
 const saveSettings = () => {
   if (!settingsForm.value.oldPassword || !settingsForm.value.newPassword) {
-    ElMessage.warning('请填写完整的密码信息');
+    ArcMessage.warning('请填写完整的密码信息');
     return;
   }
   showSaveConfirm.value = true;
@@ -834,11 +835,11 @@ const confirmSaveSettings = async () => {
         router.push('/login');
       }, 3000);
     } else {
-      ElMessage.error(res.msg || '修改失败');
+      ArcMessage.error(res.msg || '修改失败');
     }
   } catch (error) {
     console.error('修改密码失败:', error);
-    ElMessage.error('修改失败，请稍后重试');
+    ArcMessage.error('修改失败，请稍后重试');
   }
   showSaveConfirm.value = false;
 };
@@ -896,16 +897,16 @@ const handleDelete = async (friend) => {
   try {
     const res = await deleteFriend(friend.id);
     if (res.code === 200) {
-      ElMessage.success('删除好友成功');
+      ArcMessage.success('删除好友成功');
       contactStore.removeContact(friend.id);
       emitter.emit('refresh-friend-contact-list');
       emitter.emit('refresh-friend-list');
     } else {
-      ElMessage.error(res.msg || '删除好友失败');
+      ArcMessage.error(res.msg || '删除好友失败');
     }
   } catch (error) {
     console.error('删除好友失败:', error);
-    ElMessage.error('删除好友失败');
+    ArcMessage.error('删除好友失败');
   }
 };
 // #endregion
@@ -1014,13 +1015,13 @@ const confirmLogout = async () => {
     if (res.code === 200) {
       userInfoStore.removeUserInfo(); // 这里会清空token并断开WebSocket
       router.push('/login');
-      ElMessage.success('退出成功');
+      ArcMessage.success('退出成功');
     } else {
-      ElMessage.error(res.msg || '退出失败');
+      ArcMessage.error(res.msg || '退出失败');
     }
   } catch (error) {
     console.error('退出登录失败:', error);
-    ElMessage.error('退出失败，请稍后重试');
+    ArcMessage.error('退出失败，请稍后重试');
   }
   showLogoutConfirm.value = false;
 };
@@ -1183,10 +1184,10 @@ const handleRequestAction = async (req, status) => {
   requestLoadingMap.value = { ...requestLoadingMap.value, [req.id]: true };
   try {
     await handleGroupJoinApply({ id: req.id, status });
-    ElMessage.success(status === 1 ? '已同意' : '已拒绝');
+    ArcMessage.success(status === 1 ? '已同意' : '已拒绝');
     await fetchGroupJoinRequests();
   } catch (e) {
-    ElMessage.error('操作失败');
+    ArcMessage.error('操作失败');
   } finally {
     requestLoadingMap.value = { ...requestLoadingMap.value, [req.id]: false };
   }
@@ -1236,7 +1237,7 @@ async function handleAvatarUpload() {
       throw new Error(updateRes.msg || '头像修改失败');
     }
   } catch (err) {
-    ElMessage.error('上传失败');
+    ArcMessage.error('上传失败');
     console.error(err);
   } finally {
     avatarUploading.value = false;

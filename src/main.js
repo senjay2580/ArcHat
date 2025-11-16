@@ -17,7 +17,6 @@ import './assets/styles/theme.css'
 
 // 创建应用实例
 const app = createApp(App)
-
 // 配置Pinia
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)

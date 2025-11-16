@@ -174,7 +174,8 @@
 import { ref, onMounted, watch, onUnmounted, onBeforeUnmount, computed, nextTick, h } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useDark } from '@vueuse/core';
-import { ElMessage, ElNotification } from 'element-plus';
+import { ElNotification } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import { Microphone, ChatRound, Link, Position, Close } from '@element-plus/icons-vue';
 import 'emoji-picker-element';
 import { Phone } from 'lucide-vue-next';
@@ -199,7 +200,6 @@ import { useVideoCallStore } from '@/stores/videoCall.js';
 
 import { calculateLevel, linkify } from '@/utils/exp';
 import emitter from '@/utils/eventBus';
-import ArcMessage from '@/utils/ArcMessage';
 // #endregion
 
 // #region 基础状态
@@ -271,6 +271,7 @@ const message = ref(''); // 当前输入的消息内容
 const messagesContainer = ref(null); // 消息列表容器DOM引用
 const messageInput = ref(null); // 输入框DOM引用
 const observer = ref(null); // Intersection Observer实例（懒渲染）
+const isUserScrolling = ref(false); // 用户是否正在手动滚动
 
 // WebSocket连接
 const chatWS = computed(() => userStore.chatWS); // WebSocket实例
@@ -294,11 +295,27 @@ const checkWebSocketConnection = () => {
 };
 
 /**
+ * 检查用户是否在消息列表底部
+ */
+const isAtBottom = () => {
+  const messageList = messagesContainer.value;
+  if (!messageList) return true;
+  
+  const threshold = 100; // 100px的容差
+  return messageList.scrollTop + messageList.clientHeight >= messageList.scrollHeight - threshold;
+};
+
+/**
  * 滚动消息列表到底部
  */
-const scrollToBottom = () => {
+const scrollToBottom = (force = false) => {
+  // 如果用户正在滚动且不是强制滚动，则不自动滚动到底部
+  if (isUserScrolling.value && !force) {
+    return;
+  }
+  
   nextTick(() => {
-    const messageList = document.querySelector('.chat-message-list');
+    const messageList = messagesContainer.value;
     if (messageList) {
       messageList.scrollTop = messageList.scrollHeight;
     }
@@ -307,10 +324,19 @@ const scrollToBottom = () => {
 
 /**
  * 设置Intersection Observer进行懒渲染
+ * 与GroupChat保持一致的优雅实现
  */
 const setupObserver = () => {
   if (observer.value) {
     observer.value.disconnect();
+  }
+
+  // 如果消息数量较少，不使用懒渲染，避免初始滚动问题
+  if (messages.value.length < 50) {
+    messages.value.forEach(msg => {
+      msg.isVisible = true;
+    });
+    return;
   }
 
   const options = {
@@ -430,19 +456,25 @@ const getHistoryMessages = async (roomId) => {
         idx: `hist-${idx}`,
         status: msg.status,
         type: msg.type,
-        isVisible: false // 历史消息初始为不可见
+        isVisible: true // 历史消息初始为可见，避免初始滚动问题
       }));
       messages.value = historyMessages;
+      // 立即设置滚动位置，避免滚动动画
       nextTick(() => {
-        scrollToBottom();
+        isUserScrolling.value = false;
+        const messageList = messagesContainer.value;
+        if (messageList) {
+          // 直接设置scrollTop，无动画
+          messageList.scrollTop = messageList.scrollHeight;
+        }
         setupObserver();
       });
     } else {
-      ElMessage.error(res.msg || '获取历史消息失败');
+      ArcMessage.error(res.msg || '获取历史消息失败');
     }
   } catch (error) {
     console.error('获取历史消息错误:', error);
-    ElMessage.error('获取历史消息失败，请稍后重试');
+    ArcMessage.error('获取历史消息失败，请稍后重试');
   } finally {
     isLoading.value = false;
   }
@@ -456,6 +488,8 @@ watch(
     if (route.path.startsWith('/chat/')) {
       newId = Number(newId);
       isLoading.value = true;
+      // 切换房间时重置用户滚动状态
+      isUserScrolling.value = false;
 
       await checkAndHandleChat(newId);
       try {
@@ -478,8 +512,16 @@ watch(
         };
         if (chatUser.roomId) {
           await getHistoryMessages(chatUser.roomId);
+        } else {
+          // 如果没有历史消息，也要重置滚动状态
+          isUserScrolling.value = false;
+          nextTick(() => {
+            const messageList = messagesContainer.value;
+            if (messageList) {
+              messageList.scrollTop = messageList.scrollHeight;
+            }
+          });
         }
-        scrollToBottom();
       } catch (error) {
         router.push('/chat');
       } finally {
@@ -505,9 +547,26 @@ const currentChatStatus = computed(() => {
 
 
 
+// 滚动事件处理器
+const handleScroll = () => {
+  if (!messagesContainer.value) return;
+  
+  // 检测用户是否在底部
+  const atBottom = isAtBottom();
+  isUserScrolling.value = !atBottom;
+};
+
 // #region 生命周期钩子
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  
+  // 延迟添加滚动监听器，确保DOM已经渲染
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.addEventListener('scroll', handleScroll);
+    }
+  });
+  
   emitter.on('websocket-reconnect', () => {
     connectionStatus.value = 'disconnected';
   });
@@ -530,15 +589,16 @@ onMounted(() => {
       };
       messages.value.push(newMsg);
       nextTick(() => {
-        scrollToBottom();
+        // 只有用户在底部时才自动滚动
+        if (!isUserScrolling.value) {
+          scrollToBottom();
+        }
         setupObserver(); // 重新设置观察器
       });
     }
     // 不在当前聊天的消息由GlobalMessageManager统一处理
   });
-  watch(messages, () => {
-    scrollToBottom();
-  }, { deep: true });
+  // 移除自动滚动的watch，避免用户滚动时被强制拉回底部
   
   // 监听用户上下线通知
   emitter.on('user-status', (data) => {
@@ -577,6 +637,11 @@ onUnmounted(() => {
   // 断开Intersection Observer
   if (observer.value) {
     observer.value.disconnect();
+  }
+  
+  // 清理滚动监听器
+  if (messagesContainer.value) {
+    messagesContainer.value.removeEventListener('scroll', handleScroll);
   }
   
   // 清理主题切换定时器
@@ -619,12 +684,13 @@ const sendMessage = async () => {
       if (messageInput.value) {
         messageInput.value.focus();
       }
-      scrollToBottom();
+      // 发送消息时强制滚动到底部
+      scrollToBottom(true);
       setupObserver(); // 重新设置观察器
     });
   } catch (error) {
     console.error('发送消息失败:', error);
-    ElMessage.error('发送消息失败，请检查网络连接');
+    ArcMessage.error('发送消息失败，请检查网络连接');
   }
 };
 // #endregion

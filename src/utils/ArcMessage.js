@@ -2,6 +2,7 @@ import { createApp, nextTick } from 'vue'
 import ExpDialog from '@/components/feedback/ExpDialog.vue'
 import ErrorDialog from '@/components/feedback/ErrorDialog.vue'
 import InfoDialog from '@/components/feedback/InfoDialog.vue'
+import WarningDialog from '@/components/feedback/WarningDialog.vue'
 
 // Notification manager to handle stacking
 class NotificationManager {
@@ -9,7 +10,8 @@ class NotificationManager {
     this.notifications = {
       success: [],
       error: [],
-      info: []
+      info: [],
+      warning: []
     }
   }
 
@@ -68,6 +70,17 @@ class NotificationManager {
           const infoHeight = 90
           const infoVerticalOffset = baseOffset + (index * (infoHeight + gap))
           notification.container.style.top = `${infoVerticalOffset}px`
+          notification.container.style.left = '50%'
+          notification.container.style.transform = 'translateX(-50%)'
+          notification.container.style.right = 'auto'
+          notification.container.style.bottom = 'auto'
+          break
+          
+        case 'warning':
+          // Vertical stacking for warning notifications (center top)
+          const warningHeight = 80
+          const warningVerticalOffset = baseOffset + (index * (warningHeight + gap))
+          notification.container.style.top = `${warningVerticalOffset}px`
           notification.container.style.left = '50%'
           notification.container.style.transform = 'translateX(-50%)'
           notification.container.style.right = 'auto'
@@ -171,6 +184,13 @@ const ArcMessage = {
   
   info: (title, message = '', duration = 3000) => {
     return createNotification(InfoDialog, 'info', {
+      title: title,
+      message: message
+    }, duration)
+  },
+  
+  warning: (title, message = '', duration = 4000) => {
+    return createNotification(WarningDialog, 'warning', {
       title: title,
       message: message
     }, duration)

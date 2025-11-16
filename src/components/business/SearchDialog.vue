@@ -172,7 +172,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { Search, CircleCheck, CircleClose } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import FullScreenDialog from '@/components/layout/FullScreenDialog.vue';
 import DangerButton from '@/components/form/DangerButton.vue';
 import { searchFriends } from '@/api/friend';
@@ -309,11 +309,11 @@ const handleFriendSearch = async () => {
       friendPagination.value.total = res.data.total;
       friendPagination.value.pages = res.data.pages;
     } else {
-      ElMessage.error(res.msg || '搜索失败');
+      ArcMessage.error(res.msg || '搜索失败');
     }
   } catch (error) {
     console.error('搜索错误:', error);
-    ElMessage.error('搜索失败，请稍后重试');
+    ArcMessage.error('搜索失败，请稍后重试');
   } finally {
     friendSearchLoading.value = false;
   }
@@ -350,11 +350,11 @@ const handleGroupSearch = async () => {
       groupPagination.value.total = res.data.total;
       groupPagination.value.pages = Math.ceil(res.data.total / groupPagination.value.pageSize);
     } else {
-      ElMessage.error(res.msg || '搜索失败');
+      ArcMessage.error(res.msg || '搜索失败');
     }
   } catch (error) {
     console.error('搜索错误:', error);
-    ElMessage.error('搜索失败，请稍后重试');
+    ArcMessage.error('搜索失败，请稍后重试');
   } finally {
     groupSearchLoading.value = false;
   }
@@ -406,9 +406,9 @@ const handleAddFriend = async (friend) => {
       friendId: friend.id
     });
     if (response.code === 200) {
-      ElMessage.success('好友添加请求已发送');
+      ArcMessage.success('好友添加请求已发送');
     } else {
-      ElMessage.error(response.msg || '添加好友失败');
+      ArcMessage.error(response.msg || '添加好友失败');
     }
   } catch (error) {
     console.error('添加好友失败:', error);
@@ -426,7 +426,7 @@ const handleJoinGroup = async (group) => {
     inputVisible.value = true;
   } catch (error) {
     console.error('加入群聊失败:', error);
-    ElMessage.error('加入群聊失败，请稍后重试');
+    ArcMessage.error('加入群聊失败，请稍后重试');
   }
 };
 
@@ -455,7 +455,7 @@ const handleShowPopover = (group) => {
 // 处理发送申请消息
 const handleSendApplyMessage = async (group) => {
   if (!applyMessage.value.trim()) {
-    ElMessage.warning('请输入申请信息');
+    ArcMessage.warning('请输入申请信息');
     return;
   }
 
@@ -464,12 +464,12 @@ const handleSendApplyMessage = async (group) => {
       roomId: group.id,
       msg: applyMessage.value.trim()
     });
-    ElMessage.success('已发送加入群聊请求');
+    ArcMessage.success('已发送加入群聊请求');
     group.popoverVisible = false;
     applyMessage.value = '';
   } catch (error) {
     console.error('发送申请失败:', error);
-    ElMessage.error('发送申请失败，请稍后重试');
+    ArcMessage.error('发送申请失败，请稍后重试');
   }
 };
 </script>

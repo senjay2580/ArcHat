@@ -28,7 +28,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useVideoCallStore } from '@/stores/videoCall.js'
-import { ElMessage } from 'element-plus'
+import ArcMessage from '@/utils/ArcMessage';
 
 // 定义props
 const props = defineProps({
@@ -87,7 +87,7 @@ const handleVideoCallClick = async () => {
   
   // 检查目标用户信息
   if (!props.targetUser || (!props.targetUser.id && !props.targetUser.uid)) {
-    ElMessage.error('目标用户信息无效')
+    ArcMessage.error('目标用户信息无效')
     return
   }
   
@@ -97,7 +97,7 @@ const handleVideoCallClick = async () => {
   const targetUserId = props.targetUser.id || props.targetUser.uid
   
   if (currentUserId && currentUserId.toString() === targetUserId.toString()) {
-    ElMessage.warning('不能给自己发起视频通话')
+    ArcMessage.warning('不能给自己发起视频通话')
     return
   }
   
@@ -111,7 +111,7 @@ const handleVideoCallClick = async () => {
     })
     
     // 显示发起提示
-    ElMessage.info(`正在向 ${props.targetUser.name || props.targetUser.username} 发起视频通话...`)
+    ArcMessage.info(`正在向 ${props.targetUser.name || props.targetUser.username} 发起视频通话...`)
     
     // 标准化目标用户信息
     const normalizedTargetUser = {
@@ -126,31 +126,31 @@ const handleVideoCallClick = async () => {
     
     if (result.success) {
       console.log('✅ 视频通话发起成功')
-      ElMessage.success('视频通话已发起，等待对方接听...')
+      ArcMessage.success('视频通话已发起，等待对方接听...')
     } else {
       console.error('❌ 视频通话发起失败:', result.reason)
       
       // 根据失败原因显示不同的错误信息
       switch (result.reason) {
         case 'websocket_disconnected':
-          ElMessage.error('网络连接已断开，请检查网络后重试')
+          ArcMessage.error('网络连接已断开，请检查网络后重试')
           break
         case 'call_in_progress':
-          ElMessage.warning('当前有通话正在进行，请稍后再试')
+          ArcMessage.error('当前有通话正在进行，请稍后再试')
           break
         case 'start_call_failed':
-          ElMessage.error('视频通话发起失败，请重试')
+          ArcMessage.error('视频通话发起失败，请重试')
           break
         case 'exception':
-          ElMessage.error(`视频通话发起异常: ${result.error || '未知错误'}`)
+          ArcMessage.error(`视频通话发起异常: ${result.error || '未知错误'}`)
           break
         default:
-          ElMessage.error('视频通话发起失败，请重试')
+          ArcMessage.error('视频通话发起失败，请重试')
       }
     }
   } catch (error) {
     console.error('❌ 视频通话按钮处理异常:', error)
-    ElMessage.error('视频通话发起异常，请重试')
+    ArcMessage.error('视频通话发起异常，请重试')
   } finally {
     isStartingVideoCall.value = false
   }

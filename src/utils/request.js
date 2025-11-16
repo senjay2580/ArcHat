@@ -3,7 +3,7 @@
 //导入axios  npm install axios
 import axios from 'axios';
 
-import { ElMessage } from 'element-plus'
+import ArcMessage from '@/utils/ArcMessage';
 //定义一个变量,记录公共的前缀  ,  baseURL
 //const baseURL = 'http://localhost:8080';
 const baseURL = '/api/client';
@@ -36,7 +36,6 @@ instance.interceptors.request.use(
 // const router = useRouter()
 // useRouter 只能在 Vue 组件的上下文中使用，不能在普通的 JavaScript 文件或模块中使用 而router 在vue和js中都可以使用
 import router from '@/router';
-import ArcMessage from './ArcMessage';
 // 添加响应拦截器
 instance.interceptors.response.use(
     result => {

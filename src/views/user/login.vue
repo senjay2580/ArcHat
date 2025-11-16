@@ -204,7 +204,7 @@ const toggleForm = () => {
 const handleLogin = async () => {
   try {
     if (!loginForm.username || !loginForm.password) {
-      ArcMessage.error('请填写完整的登录信息')
+      ArcMessage.warning('请填写完整的登录信息')
       return
     }
     
@@ -233,17 +233,17 @@ const handleLogin = async () => {
 const handleRegister = async () => {
   try {
     if (!registerForm.username || !registerForm.password || !registerForm.confirmPassword) {
-      ArcMessage.error('请填写完整的注册信息')
+      ArcMessage.warning('请填写完整的注册信息')
       return
     }
     
     if (registerForm.password !== registerForm.confirmPassword) {
-      ArcMessage.error('两次输入的密码不一致')
+      ArcMessage.warning('两次输入的密码不一致')
       return
     }
 
     if (registerForm.password.length < 6 || registerForm.password.length > 20) {
-      ArcMessage.error('密码长度必须在6-20位之间')
+      ArcMessage.warning('密码长度必须在6-20位之间')
       return
     }
     

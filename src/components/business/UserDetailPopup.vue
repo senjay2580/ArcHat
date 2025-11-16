@@ -73,7 +73,7 @@ import { getLevelBadgeStyle } from '@/utils/exp';
 import { formatDate } from '@/utils/time';
 import MacWindowControls from '@/components/layout/MacWindowControls.vue';
 import { addFriend } from '@/api/friend';
-import { ElMessage } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import DangerButton from '@/components/form/DangerButton.vue';
 
 const props = defineProps({
@@ -132,24 +132,15 @@ const handleAddFriend = async () => {
     });
     
     if (response.code === 200) {
-      ElMessage({
-        type: 'success',
-        message: '好友请求已发送'
-      });
+      ArcMessage.success('好友请求已发送');
       emit('update:visible', false);
       emit('friend-request-sent');
     } else {
-      ElMessage({
-        type: 'error',
-        message: response.message || '添加好友失败'
-      });
+      ArcMessage.error(response.message || '添加好友失败');
     }
   } catch (error) {
     console.error('添加好友失败:', error);
-    ElMessage({
-      type: 'error',
-      message: '添加好友失败，请稍后重试'
-    });
+    ArcMessage.error('添加好友失败，请稍后重试');
   } finally {
     addingFriend.value = false;
   }

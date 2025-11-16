@@ -370,7 +370,8 @@
 // #region 导入依赖
 import { ref, onMounted, onUnmounted, watch, computed, h, defineComponent } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { ElMessage, ElMessageBox, ElInfiniteScroll } from 'element-plus';
+import { ElMessageBox, ElInfiniteScroll } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import { ChatDotRound, Setting, Sunny, Moon, ArrowLeft, Plus, User, UserFilled, Message, Bell, Close, Minus, FullScreen, Search, Position, Calendar, Folder } from '@element-plus/icons-vue';
 
 import FullScreenDialog from '@/components/layout/FullScreenDialog.vue';
@@ -545,7 +546,7 @@ const dropdownSections = ref([
         name: 'AI助手', 
         icon: 'User', 
         action: () => {
-          ElMessage.info('启动AI助手');
+          router.push('/aichat');
           isDropDownVisible.value = false;
         }
       },
@@ -553,7 +554,7 @@ const dropdownSections = ref([
         name: '智能翻译', 
         icon: 'Type', 
         action: () => {
-          ElMessage.success('开启智能翻译');
+          ArcMessage.success('开启智能翻译');
           isDropDownVisible.value = false;
         }
       },
@@ -561,7 +562,7 @@ const dropdownSections = ref([
         name: '语音识别', 
         icon: 'Circle', 
         action: () => {
-          ElMessage.info('启动语音识别');
+          ArcMessage.info('启动语音识别');
           isDropDownVisible.value = false;
         }
       },
@@ -569,7 +570,7 @@ const dropdownSections = ref([
         name: '智能摘要', 
         icon: 'CheckSquare', 
         action: () => {
-          ElMessage.info('生成智能摘要');
+          ArcMessage.info('生成智能摘要');
           isDropDownVisible.value = false;
         }
       }
@@ -582,7 +583,7 @@ const dropdownSections = ref([
         name: '文件传输', 
         icon: 'CreditCard', 
         action: () => {
-          ElMessage.success('打开文件传输');
+          ArcMessage.success('打开文件传输');
           isDropDownVisible.value = false;
         }
       },
@@ -590,7 +591,7 @@ const dropdownSections = ref([
         name: '屏幕共享', 
         icon: 'Grid3X3', 
         action: () => {
-          ElMessage.info('启动屏幕共享');
+          ArcMessage.info('启动屏幕共享');
           isDropDownVisible.value = false;
         }
       },
@@ -598,7 +599,7 @@ const dropdownSections = ref([
         name: '视频通话', 
         icon: 'MousePointer2', 
         action: () => {
-          ElMessage.info('发起视频通话');
+          ArcMessage.info('发起视频通话');
           isDropDownVisible.value = false;
         }
       },
@@ -606,7 +607,7 @@ const dropdownSections = ref([
         name: '消息加密', 
         icon: 'ToggleLeft', 
         action: () => {
-          ElMessage.info('开启消息加密');
+          ArcMessage.info('开启消息加密');
           isDropDownVisible.value = false;
         }
       },
@@ -614,7 +615,7 @@ const dropdownSections = ref([
         name: '直播间', 
         icon: 'Video', 
         action: () => {
-          ElMessage.success('进入直播间');
+          ArcMessage.success('进入直播间');
           isDropDownVisible.value = false;
         }
       },
@@ -622,7 +623,7 @@ const dropdownSections = ref([
         name: '文档协作', 
         icon: 'FileText', 
         action: () => {
-          ElMessage.info('打开文档协作');
+          ArcMessage.info('打开文档协作');
           isDropDownVisible.value = false;
         }
       }
@@ -736,7 +737,7 @@ const fetchFriendList = async () => {
       isFriendListLoaded.value = true;
 
     } else {
-      ElMessage.error(res.msg || '获取好友列表失败');
+      ArcMessage.error(res.msg || '获取好友列表失败');
     }
   } catch (error) {
 
@@ -1049,13 +1050,13 @@ const confirmLogout = async () => {
     if (res.code === 200) {
       userInfoStore.removeUserInfo(); // 这里会清空token并断开WebSocket
       router.push('/login');
-      ElMessage.success('退出成功');
+      ArcMessage.success('退出成功');
     } else {
-      ElMessage.error(res.msg || '退出失败');
+      ArcMessage.error(res.msg || '退出失败');
     }
   } catch (error) {
     console.error('退出登录失败:', error);
-    ElMessage.error('退出失败，请稍后重试');
+    ArcMessage.error('退出失败，请稍后重试');
   }
   showLogoutConfirm.value = false;
 };
@@ -1228,7 +1229,7 @@ async function handleCreateGroup() {
     };
     const res = await addGroupRoom(payload);
     if (res.code === 200) {
-      ElMessage.success('群聊创建成功');
+      ArcMessage.success('群聊创建成功');
       showCreateGroupDialog.value = false;
       handleResetForm();
       // 刷新群聊列表
@@ -1236,10 +1237,10 @@ async function handleCreateGroup() {
       noMoreGroups.value = false;
       await fetchGroupListRaw();
     } else {
-      ElMessage.error(res.msg || '创建群聊失败');
+      ArcMessage.error(res.msg || '创建群聊失败');
     }
   } catch (error) {
-    ElMessage.error('创建失败，请稍后重试');
+    ArcMessage.error('创建失败，请稍后重试');
   }
 };
 

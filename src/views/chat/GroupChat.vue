@@ -69,9 +69,17 @@
                 <template v-if="msg.type === 4 && msg.body && msg.body.url">
                   <div :class="['file-msg', getFileTypeClass(msg.body.fileName || msg.body.name)]">
                     <a :href="msg.body.url" :download="msg.body.fileName || msg.body.name" target="_blank">
-                      <span class="file-msg-icon" v-html="getFileSvg((msg.body.fileName || msg.body.name).split('.').pop().toLowerCase())"></span>
-                      <span class="file-msg-name">{{ msg.body.fileName || msg.body.name }}</span>
-                      <span class="file-msg-size">({{ formatFileSize(msg.body.size) }})</span>
+                      <div class="file-msg-content">
+                        <div class="file-msg-info">
+                          <div class="file-msg-name">{{ msg.body.fileName || msg.body.name }}</div>
+                          <div class="file-msg-size">{{ formatFileSize(msg.body.size) }}</div>
+                        </div>
+                        <div class="file-msg-icon" v-html="getFileSvg((msg.body.fileName || msg.body.name).split('.').pop().toLowerCase())"></div>
+                      </div>
+                      <div class="file-msg-footer">
+                        <div class="file-msg-divider"></div>
+                        <div class="file-msg-arc-icon">ARC File</div>
+                      </div>
                     </a>
                   </div>
                 </template>
@@ -114,9 +122,17 @@
               <!-- 文件消息加载状态 -->
               <div v-else-if="loadingMsg.type === 'file'" class="message-container message-sending">
                 <div class="file-msg" :class="getFileTypeClass(loadingMsg.fileExt)">
-                  <span class="file-msg-icon" v-html="getFileSvg(loadingMsg.fileExt)"></span>
-                  <span class="file-msg-name">{{ loadingMsg.fileName }}</span>
-                  <span class="file-msg-size">({{ formatFileSize(loadingMsg.fileSize) }})</span>
+                  <div class="file-msg-content">
+                    <div class="file-msg-info">
+                      <div class="file-msg-name">{{ loadingMsg.fileName }}</div>
+                      <div class="file-msg-size">{{ formatFileSize(loadingMsg.fileSize) }}</div>
+                    </div>
+                    <div class="file-msg-icon" v-html="getFileSvg(loadingMsg.fileExt)"></div>
+                  </div>
+                  <div class="file-msg-footer">
+                    <div class="file-msg-divider"></div>
+                    <div class="file-msg-arc-icon">ARC</div>
+                  </div>
                 </div>
                 <!-- 右下角加载动画 -->
                 <div v-if="loadingMsg.status === 'sending'" class="message-loading-indicator">
@@ -284,7 +300,7 @@
 import { ref, onMounted, watch, nextTick, computed, onBeforeUnmount, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDark } from '@vueuse/core';
-import { ElMessage } from 'element-plus';
+import ArcMessage from '@/utils/ArcMessage';
 import { ChatRound, Link, Position, UserFilled, Close, Picture, UploadFilled } from '@element-plus/icons-vue';
 import 'emoji-picker-element';
 
@@ -311,7 +327,6 @@ import { calculateLevel } from '@/utils/exp';
 import { uploadImageFile } from '@/utils/fileHandler';
 import { getFileSvg } from '@/utils/filesIcons';
 import emitter from '@/utils/eventBus';
-import ArcMessage from '@/utils/ArcMessage';
 // #endregion
 
 // #region 基础状态
@@ -950,7 +965,7 @@ const sendMessage = async () => {
         loadingMessages.value[failedMsgIndex].originalParams = params;
       }
       // 显示失败提示
-      ElMessage.error('消息发送失败，请点击重发');
+      ArcMessage.error('消息发送失败，请点击重发');
     }
   }
   
@@ -963,7 +978,7 @@ const sendMessage = async () => {
 // 重发消息函数
 const retryMessage = async (loadingMsg) => {
   if (!loadingMsg.originalParams) {
-    ElMessage.error('无法重发消息，缺少原始参数');
+    ArcMessage.warning('无法重发消息，缺少原始参数');
     return;
   }
   
@@ -1001,7 +1016,7 @@ const retryMessage = async (loadingMsg) => {
       };
       messages.value.push(newMsg);
       nextTick(scrollToBottom);
-      ElMessage.success('消息重发成功');
+      ArcMessage.success('消息重发成功');
     }
   } catch (error) {
     console.error('重发消息失败:', error);
@@ -1010,7 +1025,7 @@ const retryMessage = async (loadingMsg) => {
       loadingMessages.value[msgIndex].status = 'failed';
       loadingMessages.value[msgIndex].error = error.message || '重发失败';
     }
-    ElMessage.error('消息重发失败');
+    ArcMessage.error('消息重发失败');
   }
 }
 
@@ -1303,7 +1318,7 @@ async function sendImageMessage() {
           loadingMessages.value[failedMsgIndex].status = 'failed';
           loadingMessages.value[failedMsgIndex].error = '图片上传失败';
         }
-        ElMessage.error('图片上传失败');
+        ArcMessage.error('图片上传失败');
         continue;
       }
       
@@ -1360,7 +1375,7 @@ async function sendImageMessage() {
         loadingMessages.value[failedMsgIndex].status = 'failed';
         loadingMessages.value[failedMsgIndex].error = error.message || '图片发送失败';
       }
-      ElMessage.error('图片发送失败，请点击重发');
+      ArcMessage.error('图片发送失败，请点击重发');
     }
   }
   // 清空
@@ -1462,7 +1477,7 @@ async function sendFileMessages() {
           loadingMessages.value[failedMsgIndex].status = 'failed';
           loadingMessages.value[failedMsgIndex].error = '文件上传失败';
         }
-        ElMessage.error('文件上传失败');
+        ArcMessage.error('文件上传失败');
         continue;
       }
       
@@ -1518,7 +1533,7 @@ async function sendFileMessages() {
         loadingMessages.value[failedMsgIndex].status = 'failed';
         loadingMessages.value[failedMsgIndex].error = error.message || '文件发送失败';
       }
-      ElMessage.error('文件发送失败，请点击重发');
+      ArcMessage.error('文件发送失败，请点击重发');
     }
   }
   filePreviewList.value = [];
@@ -2281,22 +2296,20 @@ body.dark-theme .ws-reconnect-mask {
 .file-msg {
   display: inline-flex;
   align-items: center;
-  font-size: 16px;
-  padding: 10px 22px 10px 16px;
+  padding: 10px 20px 10px 25px;
   border-radius: 18px;
   background: rgba(255,255,255,0.55);
-  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.10), 0 1.5px 8px 0 rgba(0,0,0,0.10);
-  border: 1.5px solid rgba(180,200,255,0.18);
   margin-right: 8px;
-  min-width: 140px;
-  max-width: 340px;
+  width: 200px;
+  height: 100px;
   transition: box-shadow 0.18s, border 0.18s, background 0.18s;
   position: relative;
   overflow: hidden;
 }
 .dark-mode .file-msg {
+
+  
   background: linear-gradient(120deg, rgba(24,36,64,0.72) 60%, rgba(60,80,120,0.38) 100%);
-  border: 1.5px solid rgba(80,120,200,0.22);
   box-shadow: 0 4px 24px 0 rgba(0,0,0,0.22), 0 1.5px 8px 0 rgba(0,0,0,0.18);
 }
 .file-msg:hover {
@@ -2309,15 +2322,64 @@ body.dark-theme .ws-reconnect-mask {
   border-color: #90c4ff;
 }
 .file-msg a {
-  display: flex;
-  align-items: center;
+  display: block;
   text-decoration: none;
   color: inherit;
   width: 100%;
 }
+
+.file-msg-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: calc(100% - 20px);
+  padding-bottom: 8px;
+}
+
+.file-msg-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-msg-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+
+.file-msg-divider {
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin-right: 8px;
+}
+
+.file-msg-arc-icon {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.dark-mode .file-msg-divider {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark-mode .file-msg-arc-icon {
+  color: rgba(255, 255, 255, 0.5);
+}
 .file-msg-icon {
   font-size: 32px;
-  margin-right: 14px;
+  margin-left: 14px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -2329,8 +2391,8 @@ body.dark-theme .ws-reconnect-mask {
   font-size: 16px;
   font-weight: 700;
   color: #1a233a !important;
-  margin-right: 10px;
-  max-width: 140px;
+  margin-bottom: 4px;
+  max-width: 200px;
   word-break: break-all;
   overflow: hidden;
   text-overflow: ellipsis;

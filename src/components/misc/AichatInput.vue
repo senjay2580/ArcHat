@@ -167,14 +167,7 @@ onMounted(() => {
 }
 
 .search-container:focus-within {
-  transform: translateY(-1px);
-}
-
-.search-container:focus-within::after {
-  box-shadow: 
-    rgba(79, 156, 232, 0.7) 0px 5px 10px,
-    rgba(79, 156, 232, 0.5) 0px 8px 15px,
-    rgba(79, 156, 232, 0.3) 0px 10px 20px;
+  transform: translateY(-4px);
 }
 
 :root[data-theme='dark'] .search-container:focus-within::after {
