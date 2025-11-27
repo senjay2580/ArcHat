@@ -59,7 +59,7 @@ const router = createRouter({
         },
         {
             path: '/login',
-            component: () => import('@/views/user/Login.vue'),
+            component: () => import('@/views/user/login.vue'),
             name: 'login'
         },
         {
