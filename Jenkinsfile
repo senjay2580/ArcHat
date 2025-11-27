@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    tools {
+        nodejs 'Archat-client-site-node-20.18.0'
+    }
+    
     environment {
         // Docker Hub 凭据
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
