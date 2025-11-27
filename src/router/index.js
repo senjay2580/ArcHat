@@ -1,17 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/home.vue'
-import Login from '../views/user/Login.vue'
-import Chat from '../views/chat/Chat.vue'
-import UserHub from '../views/user/UserHub.vue'
-import MailBox from '../views/mail/MailBox.vue'
-import silent from '@/views/silent.vue'
-import NoticeCenter from '@/views/mail/NoticeCenter.vue'
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
             path: '/',
-            component: Home,
+            component: () => import('@/views/home.vue'),
             name: 'home',
             redirect: '/chat',
             children: [
@@ -34,17 +27,17 @@ const router = createRouter({
                 },
                 {
                     path: 'UserHub',
-                    component: UserHub,
+                    component: () => import('@/views/user/UserHub.vue'),
                     name: 'UserHub'
                 },
                 {
                     path: 'mail',
-                    component: MailBox,
+                    component: () => import('@/views/mail/MailBox.vue'),
                     name: 'mail'
                 },
                 {
                     path: 'noticecenter',
-                    component: NoticeCenter,
+                    component: () => import('@/views/mail/NoticeCenter.vue'),
                     name: 'noticecenter'
                 },
                 {
@@ -66,18 +59,18 @@ const router = createRouter({
         },
         {
             path: '/login',
-            component: Login,
+            component: () => import('@/views/user/Login.vue'),
             name: 'login'
         },
         {
             path: '/silent',
-            component: silent,
+            component: () => import('@/views/silent.vue'),
             name: 'silent'
         },
         // 404页面
         {
             path: '/:pathMatch(.*)*',
-            component: () => import('../components/misc/404NotFound.vue')
+            component: () => import('@/components/misc/404NotFound.vue')
         }
     ],
 })
