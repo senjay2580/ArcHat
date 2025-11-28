@@ -66,7 +66,7 @@ pipeline {
                     npm --version
                     
                     echo "📥 安装依赖..."
-                    npm ci --prefer-offline --no-audit
+                    npm install --prefer-offline --no-audit
                     
                     echo "🏗️ 构建生产版本..."
                     npm run build
