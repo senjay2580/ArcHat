@@ -122,20 +122,20 @@
                       <!-- 权限管理按钮 -->
                       <template v-if="canManagePermission(member)">
                         <!-- 撤销管理员权限 -->
-                        <DangerButton v-if="member.role === 2" type="gradient-orange"
-                          @click="handleRevokePermission(member)" class="permission-button revoke-button"
+                        <DangerButton v-if="member.role === 2"
+                          @click="handleRevokePermission(member)"
                           :title="'撤销管理员权限'">
                           撤销权限
                         </DangerButton>
                         <!-- 授予管理员权限 -->
-                        <DangerButton v-else type="gradient-green" @click="handleGrantPermission(member)"
-                          class="permission-button grant-button" :title="'授予管理员权限'">
+                        <DangerButton v-else @click="handleGrantPermission(member)"
+                          :title="'授予管理员权限'">
                           授予权限
                         </DangerButton>
                       </template>
 
                       <!-- 踢出按钮 -->
-                      <DangerButton v-if="canKickMember(member)" :title="'踢出群聊'" type="danger" class="kick-button"
+                      <DangerButton v-if="canKickMember(member)" :title="'踢出群聊'" type="danger"
                         @click="handleKickMember(member)">
                         踢出
                       </DangerButton>
@@ -2589,17 +2589,6 @@ onUnmounted(() => {
   gap: 8px;
 }
 
-/* 踢出按钮样式 */
-.kick-button {
-  opacity: 0;
-}
-
-.member-item:hover .kick-button {
-  opacity: 1;
-}
-
-
-
 /* 暗色模式下的角色徽章 */
 .dark-mode .member-role-badge {
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.8) 0%, rgba(255, 193, 7, 0.8) 50%, rgba(255, 152, 0, 0.8) 100%);
@@ -2609,15 +2598,6 @@ onUnmounted(() => {
 .dark-mode .member-role-badge.admin {
   background: linear-gradient(135deg, rgba(76, 175, 80, 0.8) 0%, rgba(139, 195, 74, 0.8) 50%, rgba(0, 200, 83, 0.8) 100%);
   box-shadow: 0 2px 4px rgba(76, 175, 80, 0.4);
-}
-
-/* 暗色模式下的权限管理按钮 */
-.permission-button {
-  opacity: 0;
-}
-
-.member-item:hover .permission-button {
-  opacity: 1;
 }
 
 

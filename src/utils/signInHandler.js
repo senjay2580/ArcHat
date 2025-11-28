@@ -6,7 +6,6 @@ export const handleSignIn = async () => {
   try {
     const res = await signInService()
     if (res.code === 200) {
-      ArcMessage.success('签到成功！')
       return true
     } else {
       ArcMessage.error(res.msg || '签到失败')

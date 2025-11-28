@@ -896,11 +896,55 @@ const onStreamComplete = async (message) => {
   }, 100)
 }
 
+// 复制到剪贴板的兼容性函数
+const copyToClipboard = (text) => {
+  return new Promise((resolve, reject) => {
+    // 方法1: 使用现代 Clipboard API
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(resolve).catch(() => {
+        // 如果 Clipboard API 失败，尝试降级方案
+        fallbackCopyTextToClipboard(text, resolve, reject);
+      });
+    } else {
+      // 方法2: 降级方案 - 使用传统的 execCommand
+      fallbackCopyTextToClipboard(text, resolve, reject);
+    }
+  });
+};
+
+// 降级复制方案
+const fallbackCopyTextToClipboard = (text, resolve, reject) => {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  
+  // 避免在页面上显示
+  textArea.style.position = "fixed";
+  textArea.style.left = "-999999px";
+  textArea.style.top = "-999999px";
+  
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    const successful = document.execCommand('copy');
+    if (successful) {
+      resolve();
+    } else {
+      reject(new Error('execCommand failed'));
+    }
+  } catch (err) {
+    reject(err);
+  } finally {
+    document.body.removeChild(textArea);
+  }
+};
+
 // 复制消息内容
 const copyMessageContent = (content) => {
   if (!content) return
 
-  navigator.clipboard.writeText(content).then(() => {
+  copyToClipboard(content).then(() => {
     ArcMessage.success('消息内容已复制到剪贴板');
   }).catch(err => {
     console.error('复制失败:', err);
@@ -1290,7 +1334,7 @@ window.copyCode = (codeBlockId) => {
     const codeContent = codeBlock.querySelector('code');
     if (codeContent) {
       const text = codeContent.innerText;
-      navigator.clipboard.writeText(text).then(() => {
+      copyToClipboard(text).then(() => {
         ArcMessage.success('代码已复制到剪贴板');
       }).catch(err => {
         console.error('复制失败:', err);

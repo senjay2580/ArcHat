@@ -674,7 +674,7 @@ const sendMessage = async () => {
     const newMsg = {
       side: 'right',
       text: currentInputValue.value,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: Date.now(), // 使用时间戳，确保可以被 new Date() 正确解析
       id: Date.now(),
       isVisible: true // 新发送的消息立即可见
     };
@@ -744,6 +744,12 @@ const shouldShowTime = (currentMsg, index) => {
 };
 
 const formatMessageDate = (date) => {
+  // 检查日期是否有效
+  if (!date || isNaN(date.getTime())) {
+    console.warn('Invalid date passed to formatMessageDate:', date);
+    return new Date().toLocaleString(); // 返回当前时间作为备用
+  }
+  
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();

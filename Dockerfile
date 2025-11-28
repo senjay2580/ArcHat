@@ -1,8 +1,10 @@
 # 构建阶段
-FROM node:18-slim AS build-stage
+FROM node:20-slim AS build-stage
 WORKDIR /app
 COPY . .
-RUN npm install && npm run build
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install && \
+    npm run build
 
 # 生产阶段
 FROM nginx:alpine
