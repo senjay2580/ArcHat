@@ -24,20 +24,12 @@ pipeline {
     }
     
     stages {
-        stage('Checkout Frontend') {
+        stage('Get Git Info') {
             steps {
-                echo '🔄 检出前端代码...'
-                checkout scm
-                
+                echo '📋 获取Git信息...'
                 script {
-                    env.GIT_COMMIT_MSG = sh(
-                        script: 'git log -1 --pretty=%B',
-                        returnStdout: true
-                    ).trim()
-                    env.GIT_AUTHOR = sh(
-                        script: 'git log -1 --pretty=%an',
-                        returnStdout: true
-                    ).trim()
+                    env.GIT_COMMIT_MSG = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                    env.GIT_AUTHOR = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
                 }
                 
                 echo "📝 前端提交信息: ${env.GIT_COMMIT_MSG}"
@@ -73,6 +65,8 @@ pipeline {
                     ls -la package.json
                     
                     echo "📥 安装依赖..."
+                    # 使用淘宝镜像加速下载
+                    npm config set registry https://registry.npmmirror.com
                     # 使用 npm 缓存加速安装
                     npm config set cache $PWD/.npm-cache
                     npm install --prefer-offline --no-audit
@@ -91,25 +85,45 @@ pipeline {
             }
         }
         
-        stage('Build & Push Frontend Docker') {
-            steps {
-                echo '🐳 构建前端Docker镜像...'
-                script {
-                    def frontendImage = docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}")
-                    
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
-                        frontendImage.push("${IMAGE_TAG}")
-                        frontendImage.push("latest")
+        stage('Docker Build & Deploy') {
+            parallel {
+                stage('Build & Push Docker') {
+                    steps {
+                        echo '🐳 构建前端Docker镜像...'
+                        script {
+                            def frontendImage = docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}")
+                            
+                            docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                                frontendImage.push("${IMAGE_TAG}")
+                                frontendImage.push("latest")
+                            }
+                            
+                            echo "✅ 前端镜像推送完成: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
+                        }
                     }
-                    
-                    echo "✅ 前端镜像推送完成: ${FRONTEND_IMAGE}:${IMAGE_TAG}"
+                }
+                stage('Prepare Server') {
+                    steps {
+                        echo '🔧 准备服务器环境...'
+                        script {
+                            sshagent(['deploy-server-ssh']) {
+                                sh '''
+                                    echo "🔍 检查服务器状态..."
+                                    ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} "
+                                        cd ${DEPLOY_PATH} && 
+                                        echo '服务器准备就绪'
+                                    "
+                                '''
+                            }
+                        }
+                    }
                 }
             }
         }
         
-        stage('Update Frontend on Server') {
+        stage('Deploy to Server') {
             steps {
-                echo '🚀 更新服务器前端镜像...'
+                echo '🚀 部署到服务器...'
                 script {
                     sshagent(['deploy-server-ssh']) {
                         sh '''
