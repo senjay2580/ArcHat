@@ -13,19 +13,20 @@ node-v20.18.0-linux-x64/
 # 保留: dist/, nginx.conf, Dockerfile
 # 排除其他所有文件
 
-# 源代码（Docker内不需要，因为已经构建好了）
-src/
-public/
-*.vue
-*.js
-*.ts
-*.jsx
-*.tsx
-package.json
-package-lock.json
-vite.config.js
-jsconfig.json
-index.html
+# 源代码（构建阶段需要这些文件）
+# 注意：不能排除 package.json, package-lock.json 等构建必需文件
+# src/
+# public/
+# *.vue
+# *.js
+# *.ts
+# *.jsx
+# *.tsx
+# package.json
+# package-lock.json
+# vite.config.js
+# jsconfig.json
+# index.html
 
 # 开发配置文件
 .env*
