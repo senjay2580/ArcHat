@@ -56,6 +56,7 @@ pipeline {
                         cd /tmp
                         curl -fsSL -o node-v20.18.0-linux-x64.tar.xz https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz
                         tar -xf node-v20.18.0-linux-x64.tar.xz
+                        cd -  # 返回到之前的目录
                     fi
                     
                     # 设置 Node.js PATH
@@ -64,6 +65,10 @@ pipeline {
                     echo "📦 Node.js版本信息:"
                     node --version
                     npm --version
+                    
+                    echo "📦 当前工作目录:"
+                    pwd
+                    ls -la package.json
                     
                     echo "📥 安装依赖..."
                     npm install --prefer-offline --no-audit
