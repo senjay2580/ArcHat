@@ -1,6 +1,12 @@
 pipeline {
     agent any
     
+    // 触发器配置（本地 Jenkins 使用轮询）
+    triggers {
+        // 轮询方式：每2分钟检查一次代码更新
+        pollSCM('H/2 * * * *')
+    }
+    
     // 使用系统预安装的 Node.js，避免下载问题
     // tools {
     //     nodejs 'Archat-client-site-node-20.18.0'
