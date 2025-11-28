@@ -16,7 +16,7 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
         
         // 服务器部署配置
-        DEPLOY_SERVER_IP = 'http://8.138.168.72/'  // 请替换为实际的服务器IP
+        DEPLOY_SERVER_IP = '8.138.168.72'  // 服务器IP地址
         DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/archat'
         
