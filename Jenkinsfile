@@ -54,7 +54,7 @@ pipeline {
                     if ! command -v node >/dev/null 2>&1; then
                         echo "下载 Node.js 20.18.0 二进制包..."
                         cd /tmp
-                        wget -q https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz
+                        curl -fsSL -o node-v20.18.0-linux-x64.tar.xz https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz
                         tar -xf node-v20.18.0-linux-x64.tar.xz
                     fi
                     
