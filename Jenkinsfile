@@ -49,18 +49,20 @@ pipeline {
             steps {
                 echo '🎨 构建前端项目...'
                 sh '''
-                    echo "📦 安装轻量级 Node.js..."
-                    # 使用 NodeSource 二进制包（轻量）
-                    if ! command -v node >/dev/null 2>&1; then
+                    echo "📦 检查或安装 Node.js..."
+                    # 检查工作空间中是否已有 Node.js
+                    if [ ! -d "./node-v20.18.0-linux-x64" ]; then
                         echo "下载 Node.js 20.18.0 二进制包..."
-                        cd /tmp
                         curl -fsSL -o node-v20.18.0-linux-x64.tar.xz https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz
                         tar -xf node-v20.18.0-linux-x64.tar.xz
-                        cd -  # 返回到之前的目录
+                        rm node-v20.18.0-linux-x64.tar.xz  # 清理下载文件
+                        echo "✅ Node.js 安装完成"
+                    else
+                        echo "✅ 使用缓存的 Node.js"
                     fi
                     
                     # 设置 Node.js PATH
-                    export PATH="/tmp/node-v20.18.0-linux-x64/bin:$PATH"
+                    export PATH="$PWD/node-v20.18.0-linux-x64/bin:$PATH"
                     
                     echo "📦 Node.js版本信息:"
                     node --version
@@ -71,6 +73,8 @@ pipeline {
                     ls -la package.json
                     
                     echo "📥 安装依赖..."
+                    # 使用 npm 缓存加速安装
+                    npm config set cache $PWD/.npm-cache
                     npm install --prefer-offline --no-audit
                     
                     echo "🏗️ 构建生产版本..."

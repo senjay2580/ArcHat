@@ -209,3 +209,9 @@ chromatic-build/
 # Add your project-specific ignores below
 # /public/uploads/
 # /src/config/local.js
+
+# ============================================
+# Jenkins Build Cache
+# ============================================
+node-v20.18.0-linux-x64/
+.npm-cache/
