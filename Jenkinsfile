@@ -16,7 +16,8 @@ pipeline {
         IMAGE_TAG = "${BUILD_NUMBER}"
         
         // 服务器部署配置
-        DEPLOY_SERVER = credentials('deploy-server-ssh')
+        DEPLOY_SERVER_IP = 'http://8.138.168.72/'  // 请替换为实际的服务器IP
+        DEPLOY_USER = 'root'
         DEPLOY_PATH = '/opt/archat'
         
         // Node.js配置
@@ -109,7 +110,7 @@ pipeline {
                             sshagent(['deploy-server-ssh']) {
                                 sh '''
                                     echo "🔍 检查服务器状态..."
-                                    ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} "
+                                    ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER_IP} "
                                         cd ${DEPLOY_PATH} && 
                                         echo '服务器准备就绪'
                                     "
@@ -130,7 +131,7 @@ pipeline {
                             echo "📦 更新前端镜像版本..."
                             FRONTEND_IMAGE_FULL="${FRONTEND_IMAGE}:${IMAGE_TAG}"
                             
-                            ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} "
+                            ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER_IP} "
                                 cd ${DEPLOY_PATH} && 
                                 ./deploy.sh update-frontend-image '${FRONTEND_IMAGE_FULL}' &&
                                 ./deploy.sh restart-frontend
@@ -153,7 +154,7 @@ pipeline {
                             sleep 15
                             
                             echo "🌐 检查前端服务..."
-                            if ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} "curl -f http://localhost:80 > /dev/null 2>&1"; then
+                            if ssh -o StrictHostKeyChecking=no ${DEPLOY_USER}@${DEPLOY_SERVER_IP} "curl -f http://localhost:80 > /dev/null 2>&1"; then
                                 echo "✅ 前端服务正常"
                             else
                                 echo "❌ 前端服务异常"
