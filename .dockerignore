@@ -1,0 +1,78 @@
+# ============================================
+# 最重要：排除大文件和目录
+# ============================================
+node_modules/
+.git/
+.npm-cache/
+node-v20.18.0-linux-x64/
+.vite/
+
+# ============================================
+# 只保留构建必需的文件
+# ============================================
+# 保留: dist/, nginx.conf, Dockerfile
+# 排除其他所有文件
+
+# 源代码（Docker内不需要，因为已经构建好了）
+src/
+public/
+*.vue
+*.js
+*.ts
+*.jsx
+*.tsx
+package.json
+package-lock.json
+vite.config.js
+jsconfig.json
+index.html
+
+# 开发配置文件
+.env*
+.viteIgnore
+
+# 文档和示例
+README.md
+*.md
+doc/
+docs/
+backend-analytics-example.js
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 版本控制
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+Jenkinsfile
+.jenkins/
+
+# 测试文件
+tests/
+test/
+__tests__/
+*.test.*
+*.spec.*
+
+# 临时文件
+preview/
+*.tmp
+*.temp
+*.bak
+*.log
+
+# 缓存
+.cache/
+*.cache
