@@ -1,9 +1,10 @@
 pipeline {
     agent any
     
-    tools {
-        nodejs 'Archat-client-site-node-20.18.0'
-    }
+    // 使用系统预安装的 Node.js，避免下载问题
+    // tools {
+    //     nodejs 'Archat-client-site-node-20.18.0'
+    // }
     
     environment {
         // Docker Hub 凭据
@@ -48,6 +49,18 @@ pipeline {
             steps {
                 echo '🎨 构建前端项目...'
                 sh '''
+                    echo "📦 安装轻量级 Node.js..."
+                    # 使用 NodeSource 二进制包（轻量）
+                    if ! command -v node >/dev/null 2>&1; then
+                        echo "下载 Node.js 20.18.0 二进制包..."
+                        cd /tmp
+                        wget -q https://nodejs.org/dist/v20.18.0/node-v20.18.0-linux-x64.tar.xz
+                        tar -xf node-v20.18.0-linux-x64.tar.xz
+                    fi
+                    
+                    # 设置 Node.js PATH
+                    export PATH="/tmp/node-v20.18.0-linux-x64/bin:$PATH"
+                    
                     echo "📦 Node.js版本信息:"
                     node --version
                     npm --version
